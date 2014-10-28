@@ -1,0 +1,9 @@
+[2014-10-27 19:02:02] START
+[2014-10-27 19:02:02] CREATE event_tags.py: 0
+[2014-10-27 19:02:14] CREATE student_org.py: 0
+[2014-10-27 19:02:22] CREATE student.py: 0
+[2014-10-27 19:02:27] CREATE tag.py: 0
+[2014-10-27 19:02:38] EDIT EventCentral/models/event_tags.py: 3
+[2014-10-27 19:02:59] EDIT EventCentral/models/student.py: 3
+[2014-10-27 19:03:11] EDIT EventCentral/models/tag.py: 3
+[2014-10-27 19:03:20] EDIT EventCentral/models/student_org.py: 10
