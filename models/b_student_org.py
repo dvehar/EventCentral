@@ -7,7 +7,7 @@ db.define_table('student_org',
 		Field('name', 'string', unique=True),
     Field('acronym', 'string', requires=IS_NOT_EMPTY()),
     Field('description', 'text', requires=IS_NOT_EMPTY()),
-    Field('website', 'string', requires=IS_NOT_EMPTY()),
+    Field('website', 'string'),
 		Field('meeting_times', 'string', requires=IS_NOT_EMPTY())
     )
 

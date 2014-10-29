@@ -1,0 +1,21 @@
+{{extend 'layout.html'}}
+{{if len(rows) == 0:}}
+  {{=(H3("You have no events"))}}
+{{else:}}
+  {{=(H3("Here are the events you have RSVP'd to"))}}
+{{pass}}
+
+<table>
+  <tr>
+    <th>Event Name</th>
+    <th>Start Time</th>
+    <th>RSVP</th>
+  </tr>
+  {{for row in rows:}}
+    {{=TR(
+      TD(row.events.name),
+      TD(row.events.start_time), 
+      TD('Yes') if row.rsvp.rsvp_yes_or_maybe else TD('Mayebe'))
+    }}
+  {{pass}}
+</table>
