@@ -8,13 +8,15 @@
 <table>
   <tr>
     <th>Event Name</th>
+    <th>Host Org</th>
     <th>Start Time</th>
     <th>RSVP</th>
   </tr>
   {{for row in rows:}}
     {{=TR(
       TD(row.events.name),
-      TD(row.events.start_time), 
+      TD(row.student_org.name),
+      TD(row.events.start_time),
       TD('Yes') if row.rsvp.rsvp_yes_or_maybe else TD('Mayebe'))
     }}
   {{pass}}

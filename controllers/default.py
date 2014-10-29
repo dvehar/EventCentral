@@ -7,7 +7,7 @@ def index():
 
 @auth.requires_login()
 def rsvp():
-  rows = db((db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id)).select()
+  rows = db((db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id) & (db.student_org.id == db.events.student_org_id)).select()
   print rows
   return dict(user_id=auth.user.id, rows=rows)
 
