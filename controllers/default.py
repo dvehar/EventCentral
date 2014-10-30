@@ -7,12 +7,28 @@ def index():
 
 @auth.requires_login()
 def rsvp():
-  rows = db((db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id) & (db.student_org.id == db.events.student_org_id)).select()
-  print rows
+  rows = db((db.student.student_name == auth.user.id) & (db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id) & (db.student_org.id == db.events.student_org_id)).select()
+  #print rows
   return dict(user_id=auth.user.id, rows=rows)
 
-
-
+@auth.requires_login()  
+def org_admin():
+  curr_org_info = db((request.args(0) == db.admin_pool.student_org_id) & (request.args(0) == db.student_org.id) & (auth.user.id == db.student.student_name) & (db.admin_pool.student_id == auth.user.id)).select()
+  if (len(curr_org_info) == 0):
+    session.flash = "Invalid request"
+    redirect(URL('default','index'))
+  print "+++" + str(curr_org_info) + "+++" + str(request.args(0))
+  curr_org_info = curr_org_info[0]['student_org']
+  
+  curr_id = request.args(0)
+  
+  org_acronyms_ids=[]#[(row['student_org'].acronym,row['student_org'].id)]
+  rows = db((db.admin_pool.student_id == db.student.student_name == auth.user.id) & (db.admin_pool.student_org_id == db.student_org.id)).select(db.student_org.acronym,db.student_org.id,orderby=db.student_org.acronym)
+  for idx in range(len(rows)):
+    print idx
+    org_acronyms_ids.append((rows[idx]['acronym'],rows[idx]['id']))
+  
+  return dict(curr_id=curr_id,org_acronyms_ids=org_acronyms_ids,curr_org_info=curr_org_info)
 
 
 
