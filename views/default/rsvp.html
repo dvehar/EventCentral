@@ -1,23 +1,20 @@
 {{extend 'layout.html'}}
+
+<p>{{=A('Find More Events', _class='btn', _href=URL('default', 'search'))}}</p> 
 {{if len(rows) == 0:}}
   {{=(H3("You have no events"))}}
 {{else:}}
   {{=(H3("Here are the events you have RSVP'd to"))}}
+  {{tmp = [TR(TH("Event Name"),TH("Host Org"),TH("Start Time"),TH("RSVP"))]}}
+  {{for row in rows:}}
+    {{tmp.append(TR(
+                  TD(row.events.name),
+                  TD(row.student_org.name),
+                  TD(row.events.start_time),
+                  TD('Yes') if (row.rsvp.rsvp_yes_or_maybe) else TD('Maybe')))}}
+  {{pass}}
+  {{=TABLE(tmp)}}
 {{pass}}
 
-<table>
-  <tr>
-    <th>Event Name</th>
-    <th>Host Org</th>
-    <th>Start Time</th>
-    <th>RSVP</th>
-  </tr>
-  {{for row in rows:}}
-    {{=TR(
-      TD(row.events.name),
-      TD(row.student_org.name),
-      TD(row.events.start_time),
-      TD('Yes') if row.rsvp.rsvp_yes_or_maybe else TD('Mayebe'))
-    }}
-  {{pass}}
-</table>
+
+
