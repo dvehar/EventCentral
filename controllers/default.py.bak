@@ -71,14 +71,6 @@ def api():
     return Collection(db).process(request,response,rules)
 
 
-#This is off of chpater 3 in the manual
-def show():
-    #shows an event page
-    this_page = db.events(request.args(0, cast=int)) or redirect (URL('index'))
-    form = SQLFORM(db.events).process()
-    return dict(page=this_page, form=form)
-
-
 #This is off of chapter 3 in the manual
 def search():
     return dict(form=FORM(INPUT(_id='keyword', _name='keyword',
@@ -89,7 +81,7 @@ def search():
 #This is off of chapter 3 in the manual
 def callback():
     #returns a <url> of links to pages
-    query = db.events.name.contains(request.vars.keyword)
+    query = db.events.name.contains(request.cars.keyword)
     pages = db(query).select(orderby=db.events.name)
     links = [A(e.name, _href=URL('show', args =e.id)) for e in events]
     return UL(*links)
