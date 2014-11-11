@@ -15,6 +15,8 @@ def rsvp():
   print rows
   return dict(user_id=auth.user.id, rows=rows)
 
+def download():
+    return response.download(request, db)
 
 
 

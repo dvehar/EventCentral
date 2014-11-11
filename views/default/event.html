@@ -31,7 +31,7 @@ Places neither if the user is not logged in
         {{=A('unRSVP', _class = 'btn', _href=URL('default', 'unRSVP_action', args=[event.id, auth.user_id]))}}
     {{else:}}
         {{=A('RSVP', _class = 'btn', _href=URL('default', 'RSVP_action', args=[event.id, auth.user_id]))}}
-        {{=A('Maybe I'll attend', _class = 'btn', _href=URL('default', 'RSVP_maybe', args=[event.id, auth.used_id]) )}}
+        {{=A('Maybe', _class = 'btn', _href=URL('default', 'RSVP_maybe', args=[event.id, auth.used_id]) )}}
     {{pass}}
     {{if db(db.admin_pool.student_org_id == event.student_org_id and db.admin_pool.student_id == auth.user.id).select() :}}
             {{=A('Edit event', _class = 'btn', _href = URL('default', 'Event_edit', args=[event.id]))}}
@@ -46,20 +46,27 @@ Places neither if the user is not logged in
         <th>Name</th>
         <th>Comment</th>
     </tr>
-
-{{
-comments = db(db.comments.event_id == event.id).select(orderby = ~db.comments.creation_time)
-}}
-{{for comment in comments:}}
-    {{=TR(
-        TD(comment.poster_id.student_name.first_name),
-        TD(comment.contents)
-    )}}
+{{if db(db.comments.event_id ==  event.id).select():}}
+    {{
+    comments = db(db.comments.event_id ==  event.id).select(orderby = ~db.comments.creation_time)
+    }}
+    {{for comment in comments:}}
+        {{=TR(
+            TD(comment.poster_id.student_name.first_name),
+            TD(comment.contents)
+        )}}
+    {{pass}}
 {{pass}}
 </table>
-{{if auth.user}}
+{{if auth.user:}}
     {{=A('Make a post', _class = 'btn', _href=URL('default', 'RSVP_post', args=[event.id, auth.user_id]))}}
 {{pass}}
-<!--
-Missing: pictures
--->
+
+{{if db(db.picture.picture_owner_is_student_org and
+                 db.picture.id_of_picture_owner == event.id).select():}}
+    {{pics = db(db.picture.picture_owner_is_student_org and
+                 db.picture.id_of_picture_owner == event.id).select()}}
+    {{for pic in pics:}}
+            <img src="{{=URL('download', args=pic.image)}}" />
+    {{pass}}
+{{pass}}
