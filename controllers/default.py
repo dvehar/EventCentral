@@ -74,7 +74,7 @@ def api():
 #This is off of chpater 3 in the manual
 def show():
     #shows an event page
-    this_page = db.events(request.args(0, cast=int)) or redirect (URL('index'))
+    this_page = db.events(request.args(0, cast=int)) or redirect(URL('index'))
     form = SQLFORM(db.events).process()
     return dict(page=this_page, form=form)
 
@@ -91,5 +91,5 @@ def callback():
     #returns a <url> of links to pages
     query = db.events.name.contains(request.vars.keyword)
     pages = db(query).select(orderby=db.events.name)
-    links = [A(e.name, _href=URL('show', args =e.id)) for e in events]
+    links = [A(e.name, _href=URL('show', args=e.id)) for e in events]
     return UL(*links)
