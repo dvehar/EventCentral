@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
-# this file is released under public domain and you can use without limitations
 
-#########################################################################
-## This is a sample controller
-## - index is the default action of any application
-## - user is required for authentication and authorization
-## - download is for downloading files uploaded in the db (does streaming)
-## - api is an example of Hypermedia API support and access control
-#########################################################################
+from gluon.debug import dbg
 
 def index():
     """
@@ -17,8 +10,8 @@ def index():
     if you need a simple wiki simply replace the two lines below with:
     return auth.wiki()
     """
-    response.flash = T("Welcome to web2py!")
-    return dict(message=T('Hello World'))
+    redirect(URL('search'))
+    return dict()
 
 
 def user():
@@ -58,7 +51,7 @@ def call():
     return service()
 
 
-@auth.requires_login() 
+@auth.requires_login()
 def api():
     """
     this is example of API with access control
@@ -74,7 +67,7 @@ def api():
 #This is off of chpater 3 in the manual
 def show():
     #shows an event page
-    this_page = db.events(request.args(0, cast=int)) or redirect (URL('index'))
+    this_page = db.events(request.args(0, cast=int)) or redirect(URL('index'))
     form = SQLFORM(db.events).process()
     return dict(page=this_page, form=form)
 
@@ -82,7 +75,7 @@ def show():
 #This is off of chapter 3 in the manual
 def search():
     return dict(form=FORM(INPUT(_id='keyword', _name='keyword',
-                                _onekeyup="ajax('callback', ['keyword'], 'target');")),
+                                _onkeyup="ajax('callback', ['keyword'], 'target');")),
                                 target_div=DIV(_id='target'))
 
 
@@ -91,5 +84,5 @@ def callback():
     #returns a <url> of links to pages
     query = db.events.name.contains(request.vars.keyword)
     pages = db(query).select(orderby=db.events.name)
-    links = [A(e.name, _href=URL('show', args =e.id)) for e in events]
+    links = [A(e.name, _href=URL('show', args=e.id)) for p in pages]
     return UL(*links)

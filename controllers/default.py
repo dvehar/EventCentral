@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
-# this file is released under public domain and you can use without limitations
 
-#########################################################################
-## This is a sample controller
-## - index is the default action of any application
-## - user is required for authentication and authorization
-## - download is for downloading files uploaded in the db (does streaming)
-## - api is an example of Hypermedia API support and access control
-#########################################################################
+from gluon.debug import dbg
 
 def index():
     """
@@ -17,8 +10,8 @@ def index():
     if you need a simple wiki simply replace the two lines below with:
     return auth.wiki()
     """
-    response.flash = T("Welcome to web2py!")
-    return dict(message=T('Hello World'))
+    redirect(URL('search'))
+    return dict()
 
 
 def user():
@@ -58,7 +51,7 @@ def call():
     return service()
 
 
-@auth.requires_login() 
+@auth.requires_login()
 def api():
     """
     this is example of API with access control
@@ -81,15 +74,15 @@ def show():
 
 #This is off of chapter 3 in the manual
 def search():
-    return dict(form=FORM(INPUT(_id='keyword', _name='keyword',
-                                _onekeyup="ajax('callback', ['keyword'], 'target');")),
-                                target_div=DIV(_id='target'))
+     return dict(form=FORM(INPUT(_id='keyword',_name='keyword', 
+                                 _onkeyup="ajax('callback', ['keyword'], 'target');")), 
+                                 target_div=DIV(_id='target'))
 
 
 #This is off of chapter 3 in the manual
 def callback():
-    #returns a <url> of links to pages
+    #returns a <url> of links to events
     query = db.events.name.contains(request.vars.keyword)
-    pages = db(query).select(orderby=db.events.name)
-    links = [A(e.name, _href=URL('show', args=e.id)) for e in events]
+    events = db(query).select(orderby=db.events.name)
+    links = [A(e.name, _href=URL('show',args=e.id)) for e in events]
     return UL(*links)
