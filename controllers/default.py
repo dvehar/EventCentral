@@ -13,11 +13,12 @@ def rsvp():
 
 @auth.requires_login()  
 def org_admin():
+  # get info for the org id (in request) for which you are a leader. if we can't then flash and return home
   curr_org_info = db((request.args(0) == db.admin_pool.student_org_id) & (request.args(0) == db.student_org.id) & (auth.user.id == db.student.student_name) & (db.admin_pool.student_id == auth.user.id)).select()
   if (len(curr_org_info) == 0):
     session.flash = "Invalid request"
     redirect(URL('default','index'))
-  print "+++" + str(curr_org_info) + "+++" + str(request.args(0))
+  #print "+++" + str(curr_org_info) + "+++" + str(request.args(0))
   curr_org_info = curr_org_info[0]['student_org']
   
   curr_id = request.args(0)
