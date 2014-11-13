@@ -89,6 +89,7 @@ def user():
   """
   return dict(form=auth())
 
+
 @cache.action()
 def download():
   """
@@ -108,19 +109,40 @@ def call():
   return service()
 
 
-@auth.requires_signature()
-def data():
-  """
-  http://..../[app]/default/data/tables
-  http://..../[app]/default/data/create/[table]
-  http://..../[app]/default/data/read/[table]/[id]
-  http://..../[app]/default/data/update/[table]/[id]
-  http://..../[app]/default/data/delete/[table]/[id]
-  http://..../[app]/default/data/select/[table]
-  http://..../[app]/default/data/search/[table]
-  but URLs must be signed, i.e. linked with
-    A('table',_href=URL('data/tables',user_signature=True))
-  or with the signed load operator
-    LOAD('default','data.load',args='tables',ajax=True,user_signature=True)
-  """
-  return dict(form=crud())
+@auth.requires_login()
+def api():
+    """
+    this is example of API with access control
+    WEB2PY provides Hypermedia API (Collection+JSON) Experimental
+    """
+    from gluon.contrib.hypermedia import Collection
+    rules = {
+        '<tablename>': {'GET':{},'POST':{},'PUT':{},'DELETE':{}},
+        }
+    return Collection(db).process(request,response,rules)
+
+
+#This is off of chpater 3 in the manual
+def show():
+    #shows an event page
+    this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
+    #dbg.set_trace() ####BREAKPOINT###
+    form = SQLFORM(db.events).process()
+    #dbg.set_trace() ####BREAKPOINT###
+    return dict(events=this_event, form=form)
+
+
+#This is off of chapter 3 in the manual
+def search():
+     return dict(form=FORM(INPUT(_id='keyword',_name='keyword', 
+                                 _onkeyup="ajax('callback', ['keyword'], 'target');")), 
+                                 target_div=DIV(_id='target'))
+
+
+#This is off of chapter 3 in the manual
+def callback():
+    #returns a <url> of links to events
+    query = db.events.name.contains(request.vars.keyword)
+    events = db(query).select(orderby=db.events.name)
+    links = [A(e.name, _href=URL('show',args=e.id)) for e in events]
+    return UL(*links)
