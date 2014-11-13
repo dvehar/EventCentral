@@ -67,9 +67,11 @@ def api():
 #This is off of chpater 3 in the manual
 def show():
     #shows an event page
-    this_page = db.events(request.args(0, cast=int)) or redirect(URL('index'))
+    this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
+    #dbg.set_trace() ####BREAKPOINT###
     form = SQLFORM(db.events).process()
-    return dict(page=this_page, form=form)
+    #dbg.set_trace() ####BREAKPOINT###
+    return dict(events=this_event, form=form)
 
 
 #This is off of chapter 3 in the manual

@@ -1,3 +1,4 @@
 {{extend 'layout.html'}}
-<h1>This is the default/search.html template</h1>
-{{=BEAUTIFY(response._vars)}}
+<h1>Search Events</h1>
+[  {{=A('listall', _href=URL('index'))}}]<br />
+{{=form}}<br />{{=target_div}}

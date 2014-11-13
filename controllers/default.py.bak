@@ -67,22 +67,24 @@ def api():
 #This is off of chpater 3 in the manual
 def show():
     #shows an event page
-    this_page = db.events(request.args(0, cast=int)) or redirect(URL('index'))
+    this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
+    #dbg.set_trace() ####BREAKPOINT###
     form = SQLFORM(db.events).process()
-    return dict(page=this_page, form=form)
+    #dbg.set_trace() ####BREAKPOINT###
+    return dict(events=this_event, form=form)
 
 
 #This is off of chapter 3 in the manual
 def search():
-    return dict(form=FORM(INPUT(_id='keyword', _name='keyword',
-                                _onkeyup="ajax('callback', ['keyword'], 'target');")),
-                                target_div=DIV(_id='target'))
+     return dict(form=FORM(INPUT(_id='keyword',_name='keyword', 
+                                 _onkeyup="ajax('callback', ['keyword'], 'target');")), 
+                                 target_div=DIV(_id='target'))
 
 
 #This is off of chapter 3 in the manual
 def callback():
-    #returns a <url> of links to pages
-    query = db.events.name.contains(request.vars.keyword)
-    pages = db(query).select(orderby=db.events.name)
-    links = [A(e.name, _href=URL('show', args=e.id)) for p in pages]
+    #returns a <url> of links to events
+    query = db.events.name.contains(request.vars.keyword) or db.tag.name.contains(request.vars.keyword)
+    events = db(query).select(orderby=db.events.name)
+    links = [A(e.name, _href=URL('show',args=e.id)) for e in events]
     return UL(*links)
