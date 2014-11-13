@@ -7,12 +7,14 @@ def index():
 
 @auth.requires_login()
 def rsvp():
+  ### Created by Desmond. Query and return all the events the user is RSVP'd yes or maybe to ###
   rows = db((db.student.student_name == auth.user.id) & (db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id) & (db.student_org.id == db.events.student_org_id)).select()
   #print rows
   return dict(user_id=auth.user.id, rows=rows)
 
 @auth.requires_login()  
 def org_admin():
+  ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
   # get info for the org id (in request) for which you are a leader. if we can't then flash and return home
   curr_org_info = db((request.args(0) == db.admin_pool.student_org_id) & (request.args(0) == db.student_org.id) & (auth.user.id == db.student.student_name) & (db.admin_pool.student_id == auth.user.id)).select()
   if (len(curr_org_info) == 0):
