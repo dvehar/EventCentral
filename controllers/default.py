@@ -34,8 +34,43 @@ def org_admin():
   return dict(curr_id=curr_id,org_acronyms_ids=org_acronyms_ids,curr_org_info=curr_org_info)
 
 
+#This is off of chpater 3 in the manual
+#created by: CG
+# TODO: Kyle's code goes here...
+def show():
+    #shows an event page
+    this_page = db.events(request.args(0, cast=int)) or redirect(URL('index'))
+    form = SQLFORM(db.events).process()
+    return dict(page=this_page, form=form)
 
+#This is off of chapter 3 in the manual
+#created by: CG
+def search():
+     return dict(form=FORM(INPUT(_id='keyword',_name='keyword', 
+                                 _onkeyup="ajax('callback', ['keyword'], 'target');")), 
+                                 target_div=DIV(_id='target'))
 
+#This is off of chapter 3 in the manual
+#created by: CG
+def callback():
+    #returns a <url> of links to events
+    query = db.events.name.contains(request.vars.keyword)
+    events = db(query).select(orderby=db.events.name)
+    links = [A(e.name, _href=URL('show',args=e.id)) for e in events]
+    return UL(*links)
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+#  
+# VVV Boilerplate code
+#
 
 def user():
   """
