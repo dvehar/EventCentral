@@ -6,8 +6,54 @@ def index():
   return dict(user_id=auth.user.id)
 
 def event():
-    event = db.events(request.args(0))                            #to be changed, obviously
+    event = db.events(request.args(0))
     return dict(event = event)
+
+def edit_event_pictures():                        #may be changed later to a picture viewer
+    event = db.events(request.args(0))
+    return dict(event = event)
+
+def add_picture():
+    db.picture.id_of_picture_owner.default = request.args(0)
+    db.picture.picture_owner_is_student_org.default = False
+    form = SQLFORM(db.picture)
+    if form.process().accepted:
+        redirect(URL('event', args=(request.args(0)) ))
+    return dict(form = form)
+
+def delete_picture():
+    db(db.picture.id == request.args(1)).delete()
+    redirect(URL('default','edit_event_pictures', args = (request.args(0)) ))
+    return dict()
+
+def event_edit():
+    event = db.events(request.args(0))
+    if event is None:
+        session.flash = "Invalid request"
+        redirect(URL('default', 'index'))
+    form = SQLFORM(db.events, record = event)
+    if form.process().accepted:
+        redirect(URL('default','event', args = (request.args(0)) ))
+    return dict(form = form)
+
+def RSVP_change():
+    db(db.rsvp.id == request.args(0)).update(rsvp_yes_or_maybe = request.args(1))
+    redirect(URL('event', args=(request.args(2)) ))
+    return dict()
+
+def delete_post():
+    db(db.comments.id == request.args(0)).delete()
+    redirect(URL('event', args=(request.args(1)) ))
+    return dict()
+
+def event_post():
+    db.comments.creation_time.default = request.now
+    db.comments.poster_id.default = auth.user_id
+    db.comments.event_id.default = request.args(0)
+    form = SQLFORM(db.comments)
+    if form.process().accepted:
+        redirect(URL('event', args=(request.args(0)) ))
+    return dict(form = form)
 
 @auth.requires_login()
 def rsvp():
