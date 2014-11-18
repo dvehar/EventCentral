@@ -1,0 +1,17 @@
+# -*- coding: utf-8 -*-
+# try something like
+def index(): return dict(message="hello from search.py")
+
+#This is off of chapter 3 in the manual
+def search():
+    return dict(form=FORM(INPUT(_id='keyword', _name='keyword',
+                                _onekeyup="ajax('callback', ['keyword'], 'target');")),
+                                target_div=DIV(_id='target'))
+
+#This is off of chapter 3 in the manual
+def callback():
+    #   returns a <url> of links to pages
+    query = db.events.name.contains(request.cars.keyword)
+    pages = db(query).select(orderby=db.events.name)
+    links = [A(e.name, _href=URL('show', args =e.id)) for e in events]
+    return UL(*links)
