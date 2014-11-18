@@ -1,0 +1,15 @@
+{{extend 'layout.html'}}
+
+<h3>Student Org Managment</h3>
+
+<ul>
+  {{for org_acronym,org_id in org_acronyms_ids:}}
+    {{=LI(A(org_acronym, _class='btn', _href=URL('default', 'org_admin', args=[org_id]), styles=({background-color: yellow} if org_id == curr_id else {})))}}
+  {{pass}}
+</ul>
+
+<table>
+  {{for a,b in zip(curr_org_info.keys(),curr_org_info.values()):}}
+    {{=TR(TH(a),TD(b if (b != "") else "None."))}}
+  {{pass}}
+</table>

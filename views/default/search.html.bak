@@ -1,0 +1,4 @@
+{{extend 'layout.html'}}
+<h1>Search Events</h1>
+[  {{=A('listall', _href=URL('index'))}}]<br />
+{{=form}}<br />{{=target_div}}

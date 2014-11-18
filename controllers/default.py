@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from gluon.debug import dbg
+
 @auth.requires_login()
 def index():
   response.flash = T("Welcome to web2py!")
@@ -57,17 +59,59 @@ def event_post():
 
 @auth.requires_login()
 def rsvp():
-  rows = db((db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id)).select()
-  print rows
+  ### Created by Desmond. Query and return all the events the user is RSVP'd yes or maybe to ###
+  rows = db((db.student.student_name == auth.user.id) & (db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id) & (db.student_org.id == db.events.student_org_id)).select()
+  #print rows
   return dict(user_id=auth.user.id, rows=rows)
 
+<<<<<<< HEAD
 def download():
     return response.download(request, db)
+=======
+@auth.requires_login()
+def org_admin():
+  ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
+  # get info for the org id (in request) for which you are a leader. if we can't then flash and return home
+  curr_org_info = db((request.args(0) == db.admin_pool.student_org_id) & (request.args(0) == db.student_org.id) & (auth.user.id == db.student.student_name) & (db.admin_pool.student_id == auth.user.id)).select()
+  if (len(curr_org_info) == 0):
+    session.flash = "Invalid request"
+    redirect(URL('default','index'))
+  #print "+++" + str(curr_org_info) + "+++" + str(request.args(0))
+  curr_org_info = curr_org_info[0]['student_org']
+  curr_id = request.args(0)
+  org_acronyms_ids=[]#[(row['student_org'].acronym,row['student_org'].id)]
+  rows = db((db.admin_pool.student_id == db.student.student_name == auth.user.id) & (db.admin_pool.student_org_id == db.student_org.id)).select(db.student_org.acronym,db.student_org.id,orderby=db.student_org.acronym)
+  for idx in range(len(rows)):
+    print idx
+    org_acronyms_ids.append((rows[idx]['acronym'],rows[idx]['id']))
+  return dict(curr_id=curr_id,org_acronyms_ids=org_acronyms_ids,curr_org_info=curr_org_info)
+
+>>>>>>> origin/master
+
+#This is off of chpater 3 in the manual
+def show():
+    #shows an event page
+    this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
+    #dbg.set_trace() ####BREAKPOINT###
+    form = SQLFORM(db.events).process()
+    #dbg.set_trace() ####BREAKPOINT###
+    return dict(events=this_event, form=form)
 
 
+#This is off of chapter 3 in the manual
+def search():
+     return dict(form=FORM(INPUT(_id='keyword',_name='keyword', 
+                                 _onkeyup="ajax('callback', ['keyword'], 'target');")), 
+                                 target_div=DIV(_id='target'))
 
 
-
+#This is off of chapter 3 in the manual
+def callback():
+    #returns a <url> of links to events
+    query = db.events.name.contains(request.vars.keyword)
+    events = db(query).select(orderby=db.events.name)
+    links = [A(e.name, _href=URL('show',args=e.id)) for e in events]
+    return UL(*links)
 
 
 def user():
@@ -86,6 +130,7 @@ def user():
   to decorate functions that need access control
   """
   return dict(form=auth())
+
 
 @cache.action()
 def download():
@@ -106,19 +151,14 @@ def call():
   return service()
 
 
-@auth.requires_signature()
-def data():
-  """
-  http://..../[app]/default/data/tables
-  http://..../[app]/default/data/create/[table]
-  http://..../[app]/default/data/read/[table]/[id]
-  http://..../[app]/default/data/update/[table]/[id]
-  http://..../[app]/default/data/delete/[table]/[id]
-  http://..../[app]/default/data/select/[table]
-  http://..../[app]/default/data/search/[table]
-  but URLs must be signed, i.e. linked with
-    A('table',_href=URL('data/tables',user_signature=True))
-  or with the signed load operator
-    LOAD('default','data.load',args='tables',ajax=True,user_signature=True)
-  """
-  return dict(form=crud())
+@auth.requires_login()
+def api():
+    """
+    this is example of API with access control
+    WEB2PY provides Hypermedia API (Collection+JSON) Experimental
+    """
+    from gluon.contrib.hypermedia import Collection
+    rules = {
+        '<tablename>': {'GET':{},'POST':{},'PUT':{},'DELETE':{}},
+        }
+    return Collection(db).process(request,response,rules)
