@@ -3,3 +3,7 @@
 *.pyc
 *.bak
 sessions
+errors
+languages
+cron
+modules
