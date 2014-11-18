@@ -1,0 +1,5 @@
+*.log
+*.orig
+*.pyc
+*.bak
+sessions
