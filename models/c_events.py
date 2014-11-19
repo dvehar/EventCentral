@@ -14,3 +14,4 @@ db.define_table('events',
 
 db.events.student_org_id.writable = db.events.student_org_id.readable = False
 db.events.create_time.writable = False
+#TODO force start time to be before end_time

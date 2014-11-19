@@ -10,10 +10,10 @@ def index():
 @auth.requires_login()
 def rsvp():
   ### Created by Desmond. Query and return all the events the user is RSVP'd yes or maybe to ###
-  rows = db((db.student.student_name == auth.user.id) & (db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id) & (db.student_org.id == db.events.student_org_id)).select()
+  rows = db((db.student.student_name == auth.user.id) & (db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id) & (db.student_org.id == db.events.student_org_id)).select(orderby=db.events.start_time|db.rsvp.rsvp_yes_or_maybe)
   #print rows
   return dict(user_id=auth.user.id, rows=rows)
-
+ 
 @auth.requires_login()
 def org_admin():
   ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
