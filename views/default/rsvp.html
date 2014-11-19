@@ -1,16 +1,49 @@
 {{extend 'layout.html'}}
 
+
 <p>{{=A('Find More Events', _class='btn', _href=URL('default', 'search'))}}</p> 
 {{if len(rows) == 0:}}
   {{=(H3("You have no events"))}}
 {{else:}}
   {{=(H3("Here are the events you have RSVP'd to"))}}
-  {{tmp = [TR(TH("Event Name"),TH("Host Org"),TH("Start Time"),TH("RSVP"))]}}
+  {{tmp = [TR(TH("Event Name"),TH("Host Org"),TH("Time"),TH("Location"),TH("RSVP"))]}}
   {{for row in rows:}}
+    <!-- Python to determin how to show the time. Basically we don't want to list unessary info such as year or end date if it isn't needed -->
+    {{time_str = ""}}
+    
+    {{put_year_start = False}}
+    {{put_year_end = False}}
+    {{put_month_start = False}}
+    {{put_month_end = False}}
+    {{put_day_start = True}}
+    {{put_day_end = True}}
+    {{if (row.events.start_time.year != row.events.end_time.year):}}
+      {{put_year_start = True}}
+      {{put_year_end = True}}
+      {{put_month_end = True}}
+      {{put_day_end = True}}
+    {{elif ( (row.events.start_time.month != row.events.end_time.month) or (row.events.start_time.day != row.events.end_time.day) ):}}
+      {{put_month_end = True}}
+      {{put_day_end = True}}
+    {{pass}}
+    {{time_str += str(row.events.start_time.month) + "/" + str(row.events.start_time.day)}}
+    {{if (put_year_start):}}
+      {{time_str += "/" + str(row.events.start_time.year)}}
+    {{pass}}
+    {{time_str += " " + str(row.events.start_time.hour) + ":" + str(row.events.start_time.minute) + ("PM" if row.events.start_time.hour >= 12 else "AM") + " - "}}
+    {{if (put_month_end):}}
+      {{time_str += str(row.events.end_time.month) + "/" + str(row.events.end_time.day)}}
+      {{if (put_year_end):}}
+        {{time_str += "/" + str(row.events.end_time.year)}}
+      {{pass}}
+    {{pass}}
+    {{time_str += " " + str(row.events.end_time.hour) + ":" + str(row.events.end_time.minute) + ("PM" if row.events.start_time.hour >= 12 else "AM")}}
+    
     {{tmp.append(TR(
                   TD(row.events.name),
                   TD(row.student_org.name),
-                  TD(row.events.start_time),
+                  TD(time_str),
+                  TD(row.events.place),
                   TD('Yes') if (row.rsvp.rsvp_yes_or_maybe) else TD('Maybe')))}}
   {{pass}}
   {{=TABLE(tmp)}}
