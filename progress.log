@@ -207,3 +207,6 @@
 [2014-11-15 00:33:52] EDIT git/controllers/default.py: 7
 [2014-11-15 00:35:21] EDIT git/controllers/default.py: 0
 [2014-11-15 00:35:31] EDIT git/controllers/default.py: 0
+[2014-11-18 16:19:09] EDIT git/models/z_picture.py: -7
+[2014-11-18 16:20:53] EDIT git/controllers/default.py: -3
+[2014-11-18 16:23:34] EDIT git/views/default/event.html: 0

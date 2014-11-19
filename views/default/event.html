@@ -21,15 +21,16 @@ From {{=event.start_time}} to {{=event.end_time}}
 {{=event.description}}
 <br><br>
 {{admin = False}}
-{{if db(db.admin_pool.student_org_id == event.student_org_id and db.admin_pool.student_id == auth.user.id).select() :}}
-        {{admin = True}}
-{{pass}}
+
 <!--
 Places an RSVP/unRSVP button if the user is not RSVPed or RSVPed
 Places an Edit event button if user is an admin
 Places neither if the user is not logged in
 -->
 {{if auth.user:}}
+    {{if db(db.admin_pool.student_org_id == event.student_org_id and db.admin_pool.student_id == auth.user.id).select() :}}
+            {{admin = True}}
+    {{pass}}
     {{if db(db.rsvp.event_id == event.id and db.rsvp.student_id == auth.user.id).select() :}}
         {{=A('unRSVP', _class = 'btn', _href=URL('default', 'unRSVP_action', args=[event.id, auth.user_id]))}}
         <!-- Change from yes to maybe -->

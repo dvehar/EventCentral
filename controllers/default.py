@@ -64,10 +64,10 @@ def rsvp():
   #print rows
   return dict(user_id=auth.user.id, rows=rows)
 
-<<<<<<< HEAD
+
 def download():
     return response.download(request, db)
-=======
+
 @auth.requires_login()
 def org_admin():
   ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
@@ -85,8 +85,6 @@ def org_admin():
     print idx
     org_acronyms_ids.append((rows[idx]['acronym'],rows[idx]['id']))
   return dict(curr_id=curr_id,org_acronyms_ids=org_acronyms_ids,curr_org_info=curr_org_info)
-
->>>>>>> origin/master
 
 #This is off of chpater 3 in the manual
 def show():
