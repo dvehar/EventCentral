@@ -2,6 +2,50 @@
 
 from gluon.debug import dbg
 
+#Temporary admin page.
+@auth.requires_login()
+def admin_page():
+    student_org = db(db.student_org.admins==auth.user_id).select(db.student_org.ALL, orderby=~db.student_org.join_date)
+    return dict(student_org=student_org,user_id=auth.user_id)
+
+#This page lets you view the student org profiles.
+@auth.requires_login()
+def view_student_org():
+    student_orgs = db.student_org(request.args[0]) or redirect(URL('index'))
+    return dict(student_orgs=student_orgs, user_id = auth.user_id)
+
+#This is the page where you add a student org.
+@auth.requires_login()
+def add_student_org():
+    form = SQLFORM(db.student_org, upload=URL('download'))
+    if form.process().accepted:
+        #session.flash displays a message after redirection
+        session.flash = T('New student organization successfully created!')
+        redirect(URL('index'))
+    return dict(form=form)
+
+#This page allows you to edit a student org.
+@auth.requires_login()
+def edit_student_org():
+     student_orgs = db.student_org(request.args(0,cast=int)) or redirect(URL('index'))
+     form = SQLFORM(db.student_org, student_orgs).process(
+         next = URL('view_student_org',args=request.args))
+     return dict(form=form)
+
+#This page allows you to delete a student org.
+@auth.requires_login()
+def delete_student_org():
+    student_orgs = db.student_org(request.args[0]) or redirect(URL('index'))
+    #if auth.user_id != student_orgs.admins:
+    #    session.flash = T("Authorization error")
+    #    redirect(URL('index'))
+    form = SQLFORM.factory()
+    if form.process().accepted:
+        db(db.student_org.id == request.args[0]).delete()
+        session.flash = T(student_orgs.name + ' was deleted')
+        redirect(URL('index'))
+    return dict(form=form, student_orgs=student_orgs)#, user=auth.user)
+
 @auth.requires_login()
 def index():
   response.flash = T("Welcome to web2py!")

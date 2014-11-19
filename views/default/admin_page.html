@@ -1,0 +1,36 @@
+{{left_sidebar_enabled,right_sidebar_enabled=False,('message' in globals())}}
+{{extend 'layout.html'}}
+
+<style>
+.light {
+	color: #B2B2B2;
+}
+</style>
+
+<script>
+function create() {
+	window.location = "{{=URL('add_student_org')}}";
+}
+</script>
+
+<!--The code iterates through the database and displays all the orgs.
+The user is able to see orgs he/she is an admin of.-->
+
+<p class="light">Note: Organized by most decending join date.</p>
+<br>
+
+{{i = 0}}
+<ul>
+{{for student_orgs in student_org:}}
+	{{i = i + 1}}
+	<h3>
+		{{=T(student_orgs.name)}} &nbsp;
+        [ {{=A('View', _href=URL('view_student_org', args=[student_orgs.id]))}} | {{=A('Edit', _href=URL('edit_student_org', args=[student_orgs.id]))}} | {{=A('Delete', _href=URL('delete_student_org', args=[student_orgs.id]))}} ]
+	</h3>
+{{pass}}
+</ul>
+{{if i == 0:}}
+<p class="light">Click "Create" to create a new student org.</p>
+{{pass}}
+<br />
+{{=BUTTON('Create', _onclick="create()")}}
