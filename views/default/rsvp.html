@@ -1,16 +1,68 @@
 {{extend 'layout.html'}}
+<!-- Created by Desmond -->
 
 <p>{{=A('Find More Events', _class='btn', _href=URL('default', 'search'))}}</p> 
 {{if len(rows) == 0:}}
   {{=(H3("You have no events"))}}
 {{else:}}
   {{=(H3("Here are the events you have RSVP'd to"))}}
-  {{tmp = [TR(TH("Event Name"),TH("Host Org"),TH("Start Time"),TH("RSVP"))]}}
+  {{tmp = [TR(
+    TH(A("Event Name",  _class='btn', href=URL('default', 'rsvp'))),
+    TH(A("Host Org",  _class='btn', href=URL('default', 'rsvp'))),
+    TH(A("Time",  _class='btn', href=URL('default', 'rsvp'), _style='text-decoration: underline')),
+    TH(A("Location",  _class='btn', href=URL('default', 'rsvp'))),
+    TH(A("RSVP",  _class='btn', href=URL('default', 'rsvp'))))] }}
   {{for row in rows:}}
+    <!-- Python to determin how to show the time. Basically we don't want to list unessary info such as year or end date if it isn't needed -->
+    {{time_str = ""}}
+    <!-- TODO confirm times are displayed correctly -->
+    {{put_year_start = False}}
+    {{put_year_end = False}}
+    {{put_month_start = False}}
+    {{put_month_end = False}}
+    {{put_day_start = True}}
+    {{put_day_end = True}}
+    {{start_time_hour = row.events.start_time.hour - (12 if (row.events.start_time.hour > 12) else 0) }}
+    {{start_time_hour = 12 if (start_time_hour == 0) else start_time_hour}}
+    {{end_time_hour = row.events.end_time.hour - (12 if (row.events.end_time.hour > 12) else 0) }}
+    {{end_time_hour = 12 if (end_time_hour == 0) else end_time_hour}}
+    <!--{{print "()()"}}-->
+    <!--{{print row.events.start_time.hour}}-->
+    <!--{{print start_time_hour}}-->
+    <!--{{print row.events.end_time.hour}}-->
+    <!--{{print end_time_hour}}-->
+    <!--{{print "()()"}}-->
+    
+    {{if (row.events.start_time.year != datetime.now().year):}}
+      {{put_year_start = True}}
+    {{pass}}
+    {{if (row.events.start_time.year != row.events.end_time.year):}}
+      {{put_year_start = True}}
+      {{put_year_end = True}}
+      {{put_month_end = True}}
+      {{put_day_end = True}}
+    {{elif ( (row.events.start_time.month != row.events.end_time.month) or (row.events.start_time.day != row.events.end_time.day) ):}}
+      {{put_month_end = True}}
+      {{put_day_end = True}}
+    {{pass}}
+    {{time_str += str(row.events.start_time.month) + "/" + str(row.events.start_time.day)}}
+    {{if (put_year_start):}}
+      {{time_str += "/" + str(row.events.start_time.year)}}
+    {{pass}}
+    {{time_str += " " + str(start_time_hour) + ":" + str(row.events.start_time.minute).zfill(2) + ("PM" if row.events.start_time.hour >= 12 else "AM") + " - "}}
+    {{if (put_month_end):}}
+      {{time_str += str(row.events.end_time.month) + "/" + str(row.events.end_time.day)}}
+      {{if (put_year_end):}}
+        {{time_str += "/" + str(row.events.end_time.year)}}
+      {{pass}}
+    {{pass}}
+    {{time_str += " " + str(end_time_hour) + ":" + str(row.events.end_time.minute).zfill(2) + ("PM" if row.events.end_time.hour >= 12 else "AM")}}
+    
     {{tmp.append(TR(
-                  TD(row.events.name),
-                  TD(row.student_org.name),
-                  TD(row.events.start_time),
+                  TD(A(row.events.name,_href=URL('default', 'event', args=[row.events.id]))), 
+                  TD(A(row.student_org.name,_href=URL('default', 'rsvp', args=[row.student_org.id]))), # TODO put the correct page for viewing rsvps
+                  TD(time_str),
+                  TD(row.events.place),
                   TD('Yes') if (row.rsvp.rsvp_yes_or_maybe) else TD('Maybe')))}}
   {{pass}}
   {{=TABLE(tmp)}}
