@@ -6,12 +6,15 @@
   {{=(H3("You have no events"))}}
 {{else:}}
   {{=(H3("Here are the events you have RSVP'd to"))}}
+  <!-- the column we sort by is underlined (assending) or overlined (descending) -->
   {{tmp = [TR(
-    TH(A("Event Name",  _class='btn', href=URL('default', 'rsvp'))),
-    TH(A("Host Org",  _class='btn', href=URL('default', 'rsvp'))),
-    TH(A("Time",  _class='btn', href=URL('default', 'rsvp'), _style='text-decoration: underline')),
-    TH(A("Location",  _class='btn', href=URL('default', 'rsvp'))),
-    TH(A("RSVP",  _class='btn', href=URL('default', 'rsvp'))))] }}
+            TH(A("Event Name", _id="EventNameColumn", _name="EventNameColumn", _class='btn', _onclick="ajax('%s', ['EventNameColumn'], ':eval')" % URL('default', 'update_rsvp_column_sort'))),
+            TH(A("Host Org", _id="HostOrgColumn", _class='btn')),
+            TH(A("Time", _id="TimeColumn", _class='btn', _style='text-decoration: underline')),
+            TH(A("Location", _id="LocationColumn", _class='btn')),
+            TH(A("RSVP", _id="RSVPColumn", _class='btn')))
+          ]
+    }}
   {{for row in rows:}}
     <!-- Python to determin how to show the time. Basically we don't want to list unessary info such as year or end date if it isn't needed -->
     {{time_str = ""}}
@@ -67,6 +70,62 @@
   {{pass}}
   {{=TABLE(tmp)}}
 {{pass}}
-
+<div id="target"></div>
+<script>
+$(document).ready(function() {
+  /*$('#EventNameColumn').click(
+    function(){
+      console.log("event name...");
+      //EventNameColumn
+      column_to_sort_on='EventNameColumn'
+      ajax('{{=URL('default', 'update_rsvp_column_sort')}}', ['EventNameColumn'], ':eval')
+      
+      console.log();
+    }
+  );*/
+  $("#HostOrgColumn").click(
+    function(){
+      console.log("host org...");
+      
+      column_to_sort_on='HostOrgColumn'
+      ajax('{{=URL('default', 'update_rsvp_column_sort')}}', ['column_to_sort_on'], ':eval')
+      
+      console.log();
+    }
+  );
+  $("#TimeColumn").click(
+    function(){
+      console.log("time...");
+      
+      column_to_sort_on='TimeColumn'
+      ajax('{{=URL('default', 'update_rsvp_column_sort')}}', ['column_to_sort_on'], ':eval')
+      
+      console.log();
+    }
+  );
+  $("#LocationColumn").click(
+    function(){
+      console.log("location...");
+      
+      column_to_sort_on='LocationColumn'
+      ajax('{{=URL('default', 'update_rsvp_column_sort')}}', ['column_to_sort_on'], ':eval')
+      
+      console.log();
+    }
+  );
+  $("#RSVPColumn").click(
+    function(){
+      console.log("rsvp...");
+      
+      column_to_sort_on='RSVPColumn'
+      ajax('{{=URL('default', 'update_rsvp_column_sort')}}', ['column_to_sort_on'], ':eval')
+      
+      console.log();
+    }
+  );
+  
+  console.log("out of ajax");
+});
+</script>
 
 

@@ -2,11 +2,17 @@
 
 from gluon.debug import dbg
 
+# vars for RSVP
+sorting_on_column = "Time"
+sort_accsending = True
+  
 @auth.requires_login()
 def index():
   response.flash = T("Welcome to web2py!")
   return dict(user_id=auth.user.id)
 
+
+# RSVP code begin   ################################################
 @auth.requires_login()
 def rsvp():
   ### Created by Desmond. Query and return all the events the user is RSVP'd yes or maybe to ###
@@ -14,6 +20,27 @@ def rsvp():
   #print rows
   return dict(user_id=auth.user.id, rows=rows)
  
+def update_rsvp_column_sort():
+  print "in update_rsvp_column_sort"
+  print request.vars
+  # switch off the old
+  cmd = "jQuery('#%s').css(%s);" % (sorting_on_column, "'text-decoration',''")
+
+  # if the clicked the current coloumn change the sorting order
+  if sorting_on_column == request.vars.column_to_sort_on:
+    sort_accsending != sort_accsending
+    
+  # add a underline or an overline to the new column
+  style_type = "'text-decoration','" + ("underline" if sort_accsending else "underline") + "'"
+  cmd += "jQuery('#%s').css(%s);" % (request.vars.column_to_sort_on, style_type)
+  
+  # update the variable
+  sorting_on_column = request.vars.column_to_sort_on
+  
+  print cmd
+  return cmd
+# RSVP code end   ##################################################
+  
 @auth.requires_login()
 def org_admin():
   ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
