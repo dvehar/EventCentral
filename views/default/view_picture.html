@@ -1,0 +1,50 @@
+{{extend 'layout.html'}}
+
+<img src="{{=URL('download', args=pic.image)}}" />
+<br>
+{{event = db.events(pic.id_of_picture_owner)}}
+{{admin = False}}
+{{if auth.user:}}
+    {{student = db(db.student.student_name == auth.user.id).select().first()}}
+    {{if db(db.admin_pool.student_org_id == event.student_org_id and db.admin_pool.student_id == student).select() :}}
+            {{admin = True}}
+    {{pass}}
+{{pass}}
+<br><br>
+<!--
+    Comments section
+-->
+
+{{if db( (db.comments.event_id == event.id) & (db.comments.comment_type == 3) ).select():}}
+    <h3>
+    Comments:
+    </h3>
+    <table>
+    <tr>
+        <th>Name</th>
+        <th>Comment</th>
+        {{if admin is True:}}
+            <th>Delete post?</th>
+        {{pass}}
+    </tr>
+    {{
+    comments = db((db.comments.event_id == event.id) & (db.comments.comment_type == 3)).select(orderby = ~db.comments.creation_time)
+    }}
+
+    {{for comment in comments:}}
+        <tr>
+            <td>{{=comment.poster_id.student_name.first_name}}</td>
+            <td>{{=comment.contents}}</td>
+            {{if admin is True:}}
+                <td>{{=A('Delete post', _href = URL('default','delete_post', args=[event.id, comment.id]))}}</td>
+            {{pass}}
+        </tr>
+    {{pass}}
+    </table>
+{{pass}}
+{{if auth.user:}}
+    {{=A('Make a post', _class = 'btn', _href=URL('default', 'event_post', args=[event.id, auth.user_id, 3]))}}
+{{pass}}
+<br>
+
+{{=A('Return', _class = 'btn', _href=URL('default', 'event', args=[event.id]) )}}

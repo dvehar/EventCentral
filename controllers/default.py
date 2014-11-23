@@ -7,14 +7,28 @@ def index():
   response.flash = T("Welcome to web2py!")
   return dict(user_id=auth.user.id)
 
+#def is_admin(event_id):
+#    if
+#    else:
+#        return False
+
 def event():
     event = db.events(request.args(0))
     return dict(event = event)
 
-def edit_event_pictures():                        #may be changed later to a picture viewer
+#requires admin rights to event
+def edit_event_pictures():
     event = db.events(request.args(0))
     return dict(event = event)
 
+def view_picture():
+    pic = db.picture(request.args(1))
+    if pic is None:
+        session.flash = "Invalid request"
+        redirect(URL('default', 'index'))
+    return dict(pic = pic)
+
+#requires admin rights to event
 def add_picture():
     db.picture.id_of_picture_owner.default = request.args(0)
     db.picture.picture_owner_is_student_org.default = False
@@ -23,11 +37,19 @@ def add_picture():
         redirect(URL('event', args=(request.args(0)) ))
     return dict(form = form)
 
+#requires admin rights to event
 def delete_picture():
     db(db.picture.id == request.args(1)).delete()
     redirect(URL('default','edit_event_pictures', args = (request.args(0)) ))
     return dict()
 
+#requires admin rights to event
+def delete_event():
+    db(db.events.id == request.args(0)).delete()
+    redirect(URL('default','index') )
+    return dict()
+
+#requires admin rights to event
 def event_edit():
     event = db.events(request.args(0))
     if event is None:
@@ -38,23 +60,44 @@ def event_edit():
         redirect(URL('default','event', args = (request.args(0)) ))
     return dict(form = form)
 
+#user should be student_id
+def RSVP_action():
+    db.rsvp.insert(event_id = request.args(0),
+                   student_id =  request.args(1),
+                   rsvp_yes_or_maybe = request.args(2))
+    redirect(URL('default', 'event', args = [request.args(0)]) )
+    return dict()
+
+#requires RSVP to event
 def RSVP_change():
     db(db.rsvp.id == request.args(0)).update(rsvp_yes_or_maybe = request.args(1))
     redirect(URL('event', args=(request.args(2)) ))
     return dict()
 
+#requires user to be the deleter
+def unRSVP_action():
+    db(db.rsvp.id == request.args(0)).delete()
+    redirect(URL('event', args=(request.args(1)) ))
+    return dict()
+
+#requires admin rights to event
 def delete_post():
     db(db.comments.id == request.args(0)).delete()
     redirect(URL('event', args=(request.args(1)) ))
     return dict()
 
+@auth.requires_login()
 def event_post():
     db.comments.creation_time.default = request.now
     db.comments.poster_id.default = auth.user_id
     db.comments.event_id.default = request.args(0)
+    db.comments.comment_type.default = request.args(2)
     form = SQLFORM(db.comments)
     if form.process().accepted:
-        redirect(URL('event', args=(request.args(0)) ))
+        if request.args(2) == 3:
+            redirect(URL('view_picture', args=(request.args(0)) ) )
+        else:
+            redirect(URL('event', args=(request.args(0)) ))
     return dict(form = form)
 
 @auth.requires_login()
@@ -98,8 +141,8 @@ def show():
 
 #This is off of chapter 3 in the manual
 def search():
-     return dict(form=FORM(INPUT(_id='keyword',_name='keyword', 
-                                 _onkeyup="ajax('callback', ['keyword'], 'target');")), 
+     return dict(form=FORM(INPUT(_id='keyword',_name='keyword',
+                                 _onkeyup="ajax('callback', ['keyword'], 'target');")),
                                  target_div=DIV(_id='target'))
 
 
