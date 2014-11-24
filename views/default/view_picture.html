@@ -6,8 +6,9 @@
 {{admin = False}}
 {{if auth.user:}}
     {{student = db(db.student.student_name == auth.user.id).select().first()}}
-    {{if db(db.admin_pool.student_org_id == event.student_org_id and db.admin_pool.student_id == student).select() :}}
-            {{admin = True}}
+    {{if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == student) ).select() :}}
+            {{me = db( (db.admin_pool.student_org_id == event.student_org_id) and (db.admin_pool.student_id == student) ).select().first()}}
+            {{=me.id}}
     {{pass}}
 {{pass}}
 <br><br>
@@ -15,7 +16,7 @@
     Comments section
 -->
 
-{{if db( (db.comments.event_id == event.id) & (db.comments.comment_type == 3) ).select():}}
+{{if db( (db.pic_comments.picid == pic.id) & (db.pic_comments.comment_type == 0) ).select():}}
     <h3>
     Comments:
     </h3>
@@ -28,7 +29,7 @@
         {{pass}}
     </tr>
     {{
-    comments = db((db.comments.event_id == event.id) & (db.comments.comment_type == 3)).select(orderby = ~db.comments.creation_time)
+    comments = db((db.pic_comments.picid == pic.id) & (db.pic_comments.comment_type == 0)).select(orderby = ~db.pic_comments.creation_time)
     }}
 
     {{for comment in comments:}}
@@ -36,14 +37,14 @@
             <td>{{=comment.poster_id.student_name.first_name}}</td>
             <td>{{=comment.contents}}</td>
             {{if admin is True:}}
-                <td>{{=A('Delete post', _href = URL('default','delete_post', args=[event.id, comment.id]))}}</td>
+                <td>{{=A('Delete post', _href = URL('default','delete_pic_post', args=[pic.id, comment.id]))}}</td>
             {{pass}}
         </tr>
     {{pass}}
     </table>
 {{pass}}
 {{if auth.user:}}
-    {{=A('Make a post', _class = 'btn', _href=URL('default', 'event_post', args=[event.id, auth.user_id, 3]))}}
+    {{=A('Make a post', _class = 'btn', _href=URL('default', 'pic_post', args=[pic.id, auth.user_id, 0]))}}
 {{pass}}
 <br>
 

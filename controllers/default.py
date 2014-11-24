@@ -7,83 +7,113 @@ def index():
   response.flash = T("Welcome to web2py!")
   return dict(user_id=auth.user.id)
 
-#def is_admin(event_id):
-#    if
-#    else:
-#        return False
+@auth.requires_login()
+def is_admin(event_id):
+    event = db.events(event_id)
+    student = db(db.student.student_name == auth.user.id).select().first()
+    if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == student) ).select():
+        return True
+    else:
+        return False
 
 def event():
     event = db.events(request.args(0))
     return dict(event = event)
 
-#requires admin rights to event
+@auth.requires_login()
 def edit_event_pictures():
-    event = db.events(request.args(0))
-    return dict(event = event)
+    if is_admin(request.args(0)):
+        event = db.events(request.args(0))
+        return dict(event = event)
+    else:
+        redirect(URL('event', args=[ request.args(0) ]))
 
 def view_picture():
-    pic = db.picture(request.args(1))
+    pic = db.picture(request.args(0))
     if pic is None:
         session.flash = "Invalid request"
         redirect(URL('default', 'index'))
     return dict(pic = pic)
 
-#requires admin rights to event
+@auth.requires_login()
 def add_picture():
-    db.picture.id_of_picture_owner.default = request.args(0)
-    db.picture.picture_owner_is_student_org.default = False
-    form = SQLFORM(db.picture)
-    if form.process().accepted:
-        redirect(URL('event', args=(request.args(0)) ))
-    return dict(form = form)
+    if is_admin(request.args(0)):
+        db.picture.id_of_picture_owner.default = request.args(0)
+        db.picture.picture_owner_is_student_org.default = False
+        form = SQLFORM(db.picture)
+        if form.process().accepted:
+            redirect(URL('event', args=(request.args(0)) ))
+        return dict(form = form)
+    else:
+        redirect(URL('event', args=(request.args(0))))
 
-#requires admin rights to event
+@auth.requires_login()
 def delete_picture():
-    db(db.picture.id == request.args(1)).delete()
+    picture = db.picture(request.args(1))
+    if (picture.picture_owner_is_student_org == False) & is_admin(db.events(picture.id_of_picture_owner).id):
+        db(db.picture.id == request.args(1)).delete()
     redirect(URL('default','edit_event_pictures', args = (request.args(0)) ))
     return dict()
 
-#requires admin rights to event
+@auth.requires_login()
 def delete_event():
-    db(db.events.id == request.args(0)).delete()
+    if is_admin(request.args(0)):
+        db(db.events.id == request.args(0)).delete()
     redirect(URL('default','index') )
     return dict()
 
-#requires admin rights to event
+@auth.requires_login()
 def event_edit():
+    if is_admin(request.args(0)) is False:
+        redirect(URL('default', 'event', args=[request.args(0)]))
     event = db.events(request.args(0))
     if event is None:
         session.flash = "Invalid request"
         redirect(URL('default', 'index'))
     form = SQLFORM(db.events, record = event)
     if form.process().accepted:
-        redirect(URL('default','event', args = (request.args(0)) ))
+        redirect(URL('default','event', args = [request.args(0)] ))
     return dict(form = form)
 
-#user should be student_id
+@auth.requires_login()
 def RSVP_action():
-    db.rsvp.insert(event_id = request.args(0),
-                   student_id =  request.args(1),
-                   rsvp_yes_or_maybe = request.args(2))
+    studnt = db.student(request.args(1))
+    if (studnt.student_name.id == auth.user.id):
+        db.rsvp.insert(event_id = request.args(0),
+                       student_id =  request.args(1),
+                       rsvp_yes_or_maybe = request.args(2))
     redirect(URL('default', 'event', args = [request.args(0)]) )
     return dict()
 
-#requires RSVP to event
+@auth.requires_login()
 def RSVP_change():
-    db(db.rsvp.id == request.args(0)).update(rsvp_yes_or_maybe = request.args(1))
-    redirect(URL('event', args=(request.args(2)) ))
+    student = db.rsvp(request.args(0)).student_id
+    if (student.student_name.id == auth.user.id):
+        db(db.rsvp.id == request.args(0)).update(rsvp_yes_or_maybe = request.args(1))
+    redirect(URL('event', args=[request.args(2)] ))
     return dict()
 
-#requires user to be the deleter
+@auth.requires_login()
 def unRSVP_action():
-    db(db.rsvp.id == request.args(0)).delete()
-    redirect(URL('event', args=(request.args(1)) ))
+    student = db.rsvp(request.args(0)).student_id
+    if (student.student_name.id == auth.user.id):
+        db(db.rsvp.id == request.args(0)).delete()
+    redirect(URL('event', args=[request.args(1)] ))
     return dict()
 
-#requires admin rights to event
+@auth.requires_login()
 def delete_post():
-    db(db.comments.id == request.args(0)).delete()
-    redirect(URL('event', args=(request.args(1)) ))
+    if is_admin(db.comments(request.args(1)).event_id):
+        db(db.comments.id == request.args(1)).delete()
+    redirect(URL('event', args=(request.args(0)) ))
+    return dict()
+
+@auth.requires_login()
+def delete_pic_post():
+    picture = db.pic_comments(request.args(1)).picid
+    if (picture.picture_owner_is_student_org == False) & is_admin(picture.id_of_picture_owner):
+        db(db.pic_comments.id == request.args(1)).delete()
+    redirect(URL('view_picture', args=(request.args(0)) ))
     return dict()
 
 @auth.requires_login()
@@ -94,10 +124,18 @@ def event_post():
     db.comments.comment_type.default = request.args(2)
     form = SQLFORM(db.comments)
     if form.process().accepted:
-        if request.args(2) == 3:
-            redirect(URL('view_picture', args=(request.args(0)) ) )
-        else:
             redirect(URL('event', args=(request.args(0)) ))
+    return dict(form = form)
+
+@auth.requires_login()
+def pic_post():
+    db.pic_comments.creation_time.default = request.now
+    db.pic_comments.poster_id.default = auth.user_id
+    db.pic_comments.picid.default = request.args(0)
+    db.pic_comments.comment_type.default = request.args(2)
+    form = SQLFORM(db.pic_comments)
+    if form.process().accepted:
+            redirect(URL('view_picture', args=(request.args(0)) ))
     return dict(form = form)
 
 @auth.requires_login()
