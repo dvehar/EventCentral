@@ -2,17 +2,63 @@
 
 from gluon.debug import dbg
 
-#Temporary admin page.
+
+######################################################################
+##############################   VIEW   ##############################
+######################################################################
+
+
 @auth.requires_login()
-def admin_page():
-    student_org = db(db.student_org.admins==auth.user_id).select(db.student_org.ALL, orderby=~db.student_org.join_date)
-    return dict(student_org=student_org,user_id=auth.user_id)
+def index():
+  response.flash = T("Welcome to web2py!")
+  return dict(user_id=auth.user.id)
+
 
 #This page lets you view the student org profiles.
 @auth.requires_login()
 def view_student_org():
     student_orgs = db.student_org(request.args[0]) or redirect(URL('index'))
     return dict(student_orgs=student_orgs, user_id = auth.user_id)
+
+
+#This is off of chpater 3 in the manual
+def show():
+    #shows an event page
+    this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
+    form = SQLFORM(db.events).process()
+    return dict(events=this_event, form=form)
+
+
+######################################################################
+##############################   ADMIN   #############################
+######################################################################
+
+
+#Temporary admin page.
+@auth.requires_login()
+def admin_page():
+    student_org = db(db.student_org.admins==auth.user_id).select(db.student_org.ALL, orderby=~db.student_org.join_date)
+    return dict(student_org=student_org,user_id=auth.user_id)
+
+
+@auth.requires_login()
+def org_admin():
+  ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
+  # get info for the org id (in request) for which you are a leader. if we can't then flash and return home
+  curr_org_info = db((request.args(0) == db.admin_pool.student_org_id) & (request.args(0) == db.student_org.id) & (auth.user.id == db.student.student_name) & (db.admin_pool.student_id == auth.user.id)).select()
+  if (len(curr_org_info) == 0):
+    session.flash = "Invalid request"
+    redirect(URL('default','index'))
+  curr_org_info = curr_org_info[0]['student_org']
+  curr_id = request.args(0)
+  org_acronyms_ids=[] #acronyms of all the orgs user is an admin of (used for buttons)   #[(row['student_org'].acronym,row['student_org'].id)]
+  # get all the orgs the user is an admin of:
+  rows = db((db.admin_pool.student_id == db.student.student_name == auth.user.id) & (db.admin_pool.student_org_id == db.student_org.id)).select(db.student_org.acronym,db.student_org.id,orderby=db.student_org.acronym)
+  for idx in range(len(rows)):
+    #print idx
+    org_acronyms_ids.append((rows[idx]['acronym'],rows[idx]['id']))
+  return dict(curr_id=curr_id,org_acronyms_ids=org_acronyms_ids,curr_org_info=curr_org_info)
+
 
 #This is the page where you add a student org.
 @auth.requires_login()
@@ -46,10 +92,11 @@ def delete_student_org():
         redirect(URL('index'))
     return dict(form=form, student_orgs=student_orgs)#, user=auth.user)
 
-@auth.requires_login()
-def index():
-  response.flash = T("Welcome to web2py!")
-  return dict(user_id=auth.user.id)
+
+######################################################################
+##############################   RVSP   ##############################
+######################################################################
+
 
 @auth.requires_login()
 def rsvp():
@@ -57,44 +104,21 @@ def rsvp():
   rows = db((db.student.student_name == auth.user.id) & (db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id) & (db.student_org.id == db.events.student_org_id)).select(orderby=db.events.start_time|db.rsvp.rsvp_yes_or_maybe)
   #print rows
   return dict(user_id=auth.user.id, rows=rows)
- 
-@auth.requires_login()
-def org_admin():
-  ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
-  # get info for the org id (in request) for which you are a leader. if we can't then flash and return home
-  curr_org_info = db((request.args(0) == db.admin_pool.student_org_id) & (request.args(0) == db.student_org.id) & (auth.user.id == db.student.student_name) & (db.admin_pool.student_id == auth.user.id)).select()
-  if (len(curr_org_info) == 0):
-    session.flash = "Invalid request"
-    redirect(URL('default','index'))
-  curr_org_info = curr_org_info[0]['student_org']
-  curr_id = request.args(0)
-  org_acronyms_ids=[] #acronyms of all the orgs user is an admin of (used for buttons)   #[(row['student_org'].acronym,row['student_org'].id)]
-  # get all the orgs the user is an admin of:
-  rows = db((db.admin_pool.student_id == db.student.student_name == auth.user.id) & (db.admin_pool.student_org_id == db.student_org.id)).select(db.student_org.acronym,db.student_org.id,orderby=db.student_org.acronym)
-  for idx in range(len(rows)):
-    #print idx
-    org_acronyms_ids.append((rows[idx]['acronym'],rows[idx]['id']))
-  return dict(curr_id=curr_id,org_acronyms_ids=org_acronyms_ids,curr_org_info=curr_org_info)
 
 
-#This is off of chpater 3 in the manual
-def show():
-    #shows an event page
-    this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
-    #dbg.set_trace() ####BREAKPOINT###
-    form = SQLFORM(db.events).process()
-    #dbg.set_trace() ####BREAKPOINT###
-    return dict(events=this_event, form=form)
+######################################################################
+#############################   SEARCH   #############################
+######################################################################
 
 
-#This is off of chapter 3 in the manual
+# off of chapter 3 in the manual
 def search():
      return dict(form=FORM(INPUT(_id='keyword',_name='keyword', 
                                  _onkeyup="ajax('callback', ['keyword'], 'target');")), 
                                  target_div=DIV(_id='target'))
 
 
-#This is off of chapter 3 in the manual
+# off of chapter 3 in the manual
 def callback():
     #returns a <url> of links to events
     query = db.events.name.contains(request.vars.keyword)
@@ -103,58 +127,25 @@ def callback():
     return UL(*links)
 
 
-    
-    
-    
-    
-    
-    
-    
-# BOILERPLATE is below....    
-    
+######################################################################
+#############################   WEB2PY   #############################
+######################################################################
+
 def user():
-  """
-  exposes:
-  http://..../[app]/default/user/login
-  http://..../[app]/default/user/logout
-  http://..../[app]/default/user/register
-  http://..../[app]/default/user/profile
-  http://..../[app]/default/user/retrieve_password
-  http://..../[app]/default/user/change_password
-  http://..../[app]/default/user/manage_users (requires membership in
-  use @auth.requires_login()
-      @auth.requires_membership('group name')
-      @auth.requires_permission('read','table name',record_id)
-  to decorate functions that need access control
-  """
   return dict(form=auth())
 
 
 @cache.action()
 def download():
-  """
-  allows downloading of uploaded files
-  http://..../[app]/default/download/[filename]
-  """
   return response.download(request, db)
 
 
 def call():
-  """
-  exposes services. for example:
-  http://..../[app]/default/call/jsonrpc
-  decorate with @services.jsonrpc the functions to expose
-  supports xml, json, xmlrpc, jsonrpc, amfrpc, rss, csv
-  """
   return service()
 
 
 @auth.requires_login()
 def api():
-    """
-    this is example of API with access control
-    WEB2PY provides Hypermedia API (Collection+JSON) Experimental
-    """
     from gluon.contrib.hypermedia import Collection
     rules = {
         '<tablename>': {'GET':{},'POST':{},'PUT':{},'DELETE':{}},
