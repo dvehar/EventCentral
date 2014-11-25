@@ -21,9 +21,8 @@ def view_student_org():
     return dict(student_orgs=student_orgs, user_id = auth.user_id)
 
 
-#This is off of chpater 3 in the manual
-def show():
-    #shows an event page
+#This page lets you view the event page
+def view_event():
     this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
     form = SQLFORM(db.events).process()
     return dict(events=this_event, form=form)
@@ -123,7 +122,7 @@ def callback():
     #returns a <url> of links to events
     query = db.events.name.contains(request.vars.keyword)
     events = db(query).select(orderby=db.events.name)
-    links = [A(e.name, _href=URL('show',args=e.id)) for e in events]
+    links = [A(e.name, _href=URL('view_event',args=e.id)) for e in events]
     return UL(*links)
 
 
