@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from gluon.debug import dbg
+import json 
 
 # vars for RSVP
 sorting_on_column = "Time"
@@ -18,10 +19,42 @@ def rsvp():
   ### Created by Desmond. Query and return all the events the user is RSVP'd yes or maybe to ###
   rows = db((db.student.student_name == auth.user.id) & (db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id) & (db.student_org.id == db.events.student_org_id)).select(orderby=db.events.start_time|db.rsvp.rsvp_yes_or_maybe)
   #print rows
-  return dict(user_id=auth.user.id, rows=rows)
- 
+  column_sorting_ajax_url = URL('update_rsvp_column_sort')
+  return dict(user_id=auth.user.id, rows=rows, column_sorting_ajax_url=column_sorting_ajax_url)
+  
 def update_rsvp_column_sort():
+  ### Created by Desmond. A ajax callback function that will determine which button should be selected and the order of the data ###
   print "in update_rsvp_column_sort"
+  v = request.vars.msg or ''
+  if (v != ''):
+    print "@@@" + str(v)
+    v = json.loads(v)
+    print "worked"
+    print "sorting_on_column: %s" % (v['sorting_on_column'])
+    print "sort_accsending: %s" % (v['sort_accsending'])
+    print "selected: %s" % (v['selected'])
+    sorting_on_column = v['sorting_on_column']
+    sort_accsending = (v['sort_accsending'] == "True")
+    selected = v['selected']
+    
+    cmd = "" # when run this command will update the styel of the of the programs approperatly
+    # switch off the old
+    cmd = "jQuery('#" + sorting_on_column + "').css('text-decoration','');"
+    # if the clicked the current coloumn change the sorting order
+    if sorting_on_column == selected:
+      sort_accsending = not sort_accsending
+    # add a underline or an overline to the new column
+    style_type = "'text-decoration','" + ("underline" if sort_accsending else "overline") + "'"
+    cmd += "jQuery('#%s').css(%s);" % (selected, style_type)
+    # update the variable
+    sorting_on_column = selected
+    bb = dict(cmd=cmd, sorting_on_column=sorting_on_column, sort_accsending=(str(sort_accsending)))
+    print bb
+    
+    return response.json(bb)
+  else:
+    return response.json(dict(cmd=""))
+  
   print request.vars
   # switch off the old
   cmd = "jQuery('#%s').css(%s);" % (sorting_on_column, "'text-decoration',''")

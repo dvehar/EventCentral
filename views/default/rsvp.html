@@ -8,9 +8,9 @@
   {{=(H3("Here are the events you have RSVP'd to"))}}
   <!-- the column we sort by is underlined (assending) or overlined (descending) -->
   {{tmp = [TR(
-            TH(A("Event Name", _id="EventNameColumn", _name="EventNameColumn", _class='btn', _onclick="ajax('%s', ['EventNameColumn'], ':eval')" % URL('default', 'update_rsvp_column_sort'))),
+            TH(A("Event Name", _id="EventNameColumn", _name="EventNameColumn", _class='btn')),
             TH(A("Host Org", _id="HostOrgColumn", _class='btn')),
-            TH(A("Time", _id="TimeColumn", _class='btn', _style='text-decoration: underline')),
+            TH(A("Time", _id="TimeColumn", _class='btn')),
             TH(A("Location", _id="LocationColumn", _class='btn')),
             TH(A("RSVP", _id="RSVPColumn", _class='btn')))
           ]
@@ -73,58 +73,79 @@
 <div id="target"></div>
 <script>
 $(document).ready(function() {
-  /*$('#EventNameColumn').click(
-    function(){
-      console.log("event name...");
-      //EventNameColumn
-      column_to_sort_on='EventNameColumn'
-      ajax('{{=URL('default', 'update_rsvp_column_sort')}}', ['EventNameColumn'], ':eval')
-      
-      console.log();
-    }
-  );*/
-  $("#HostOrgColumn").click(
-    function(){
-      console.log("host org...");
-      
-      column_to_sort_on='HostOrgColumn'
-      ajax('{{=URL('default', 'update_rsvp_column_sort')}}', ['column_to_sort_on'], ':eval')
-      
-      console.log();
-    }
-  );
-  $("#TimeColumn").click(
-    function(){
-      console.log("time...");
-      
-      column_to_sort_on='TimeColumn'
-      ajax('{{=URL('default', 'update_rsvp_column_sort')}}', ['column_to_sort_on'], ':eval')
-      
-      console.log();
-    }
-  );
-  $("#LocationColumn").click(
-    function(){
-      console.log("location...");
-      
-      column_to_sort_on='LocationColumn'
-      ajax('{{=URL('default', 'update_rsvp_column_sort')}}', ['column_to_sort_on'], ':eval')
-      
-      console.log();
-    }
-  );
-  $("#RSVPColumn").click(
-    function(){
-      console.log("rsvp...");
-      
-      column_to_sort_on='RSVPColumn'
-      ajax('{{=URL('default', 'update_rsvp_column_sort')}}', ['column_to_sort_on'], ':eval')
-      
-      console.log();
-    }
-  );
+  // these vars keep track of the state of the buttons
+  var sorting_on_column = "TimeColumn";
+  var sort_accsending = "True";
+  // setup the initial state
+  jQuery("#"+sorting_on_column).css('text-decoration','underline');
   
-  console.log("out of ajax");
+  // this function processes the result from the ajax callback by
+  // updating the state and running the jQuery given in the response.
+  function column_sorting_response_handler(jdata) {
+    var data = JSON.parse(jdata);
+    var val_cmd = data["cmd"];
+    if (val_cmd != "") {
+      var val_sorting_on_column = data["sorting_on_column"];
+      var val_sort_accsending = data["sort_accsending"];
+      console.log("-R-" + val_cmd);
+      console.log("-R-" + val_sorting_on_column);
+      console.log("-R-" + val_sort_accsending);
+      sorting_on_column = val_sorting_on_column;
+      sort_accsending = val_sort_accsending;
+      eval(val_cmd);
+    }
+  }
+
+  $('#EventNameColumn').click(
+    function(){
+      var data = {sorting_on_column:sorting_on_column, sort_accsending:sort_accsending, selected:"EventNameColumn"};
+      var msg = "msg=" + JSON.stringify(data);  
+      console.log("debug1--- " + msg);
+      $.post('{{=column_sorting_ajax_url}}', msg, function(jdata) {
+        column_sorting_response_handler(jdata);
+      });
+    }
+  );
+  $('#HostOrgColumn').click(
+    function(){
+      var data = {sorting_on_column:sorting_on_column, sort_accsending:sort_accsending, selected:"HostOrgColumn"};
+      var msg = "msg=" + JSON.stringify(data);  
+      console.log("debug1--- " + msg);
+      $.post('{{=column_sorting_ajax_url}}', msg, function(jdata) {
+        column_sorting_response_handler(jdata);
+      });
+    }
+  );
+  $('#TimeColumn').click(
+    function(){
+      var data = {sorting_on_column:sorting_on_column, sort_accsending:sort_accsending, selected:"TimeColumn"};
+      var msg = "msg=" + JSON.stringify(data);  
+      console.log("debug1--- " + msg);
+      $.post('{{=column_sorting_ajax_url}}', msg, function(jdata) {
+        column_sorting_response_handler(jdata);
+      });
+    }
+  );
+  $('#LocationColumn').click(
+    function(){
+      var data = {sorting_on_column:sorting_on_column, sort_accsending:sort_accsending, selected:"LocationColumn"};
+      var msg = "msg=" + JSON.stringify(data);  
+      console.log("debug1--- " + msg);
+      $.post('{{=column_sorting_ajax_url}}', msg, function(jdata) {
+        column_sorting_response_handler(jdata);
+      });
+    }
+  );
+  $('#RSVPColumn').click(
+    function(){
+      var data = {sorting_on_column:sorting_on_column, sort_accsending:sort_accsending, selected:"RSVPColumn"};
+      var msg = "msg=" + JSON.stringify(data);  
+      console.log("debug1--- " + msg);
+      $.post('{{=column_sorting_ajax_url}}', msg, function(jdata) {
+        column_sorting_response_handler(jdata);
+      });
+    }
+  );
 });
 </script>
 
