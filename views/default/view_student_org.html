@@ -41,5 +41,19 @@ function index()
 
 {{=BUTTON('Back', _onclick="index()")}}
 
-<!--Temp admin page button-->
-<p>{{=A('Admin Page', _class='btn', _href=URL('admin_page'))}}</p>
+<!--
+Follows the format of Kyle's authorization
+Places an Edit Student Org button if the user is an admin
+Places neither if the user is not logged in
+-->
+{{admin = False}}
+
+{{if auth.user:}}
+    {{if db(db.admin_pool.student_org_id == student_orgs.id and db.admin_pool.student_id == auth.user.id).select() :}}
+            {{admin = True}}
+    {{pass}}
+    {{if admin == True:}}
+            {{=A('Edit Student Org', _class = 'btn',  _href=URL('default', 'edit_student_org', args=[student_org.id]))}}
+            {{=A('Delete Student Org', _class = 'btn',  _href=URL('default', 'delete_student_org', args=[student_org.id]))}}
+    {{pass}}
+{{pass}}
