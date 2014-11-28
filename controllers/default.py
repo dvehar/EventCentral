@@ -23,15 +23,9 @@ def rsvp():
   
 def update_rsvp_column_sort():
   ### Created by Desmond. A ajax callback function that will determine which button should be selected and the order of the data ###
-  print "in update_rsvp_column_sort"
   v = request.vars.msg or ''
   if (v != ''):
-    print "@@@" + str(v)
     v = json.loads(v)
-    print "worked"
-    print "sorting_on_column: %s" % (v['sorting_on_column'])
-    print "sort_accsending: %s" % (v['sort_accsending'])
-    print "selected: %s" % (v['selected'])
     sorting_on_column = v['sorting_on_column']
     sort_accsending = (v['sort_accsending'] == "True")
     selected = v['selected']
@@ -54,7 +48,6 @@ def update_rsvp_column_sort():
   else:
     return response.json(dict(cmd=""))
   
-  print request.vars
   # switch off the old
   cmd = "jQuery('#%s').css(%s);" % (sorting_on_column, "'text-decoration',''")
 
@@ -69,7 +62,6 @@ def update_rsvp_column_sort():
   # update the variable
   sorting_on_column = request.vars.column_to_sort_on
   
-  print cmd
   return cmd
 # RSVP code end   ##################################################
   
