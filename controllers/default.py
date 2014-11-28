@@ -2,10 +2,9 @@
 
 from gluon.debug import dbg
 import json 
+from operator import itemgetter
 
-# vars for RSVP
-sorting_on_column = "Time"
-sort_accsending = True
+test_global_var = 15
   
 @auth.requires_login()
 def index():
