@@ -1,0 +1,24 @@
+{{extend 'layout.html'}}
+<style>
+.light {
+	color: #B2B2B2;
+}
+button {
+	margin-left: 5px;
+}
+</style>
+
+<script>
+function index()
+{
+	window.location = "{{=URL('index')}}";
+}
+</script>
+
+<!--A message is presented to the user asking if he/she would like to delete the student org.-->
+
+<p>Do you really wish to delete the student organization, {{=student_orgs.name}}?</p>
+<br>
+
+{{=form}}
+{{=BUTTON('Cancel', _onclick="index()")}}

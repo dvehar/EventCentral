@@ -4,15 +4,35 @@ from gluon.debug import dbg
 import json 
 from operator import itemgetter
 
-test_global_var = 15
-  
+###########################################################################################################################################################################################
+#################################################################################   VIEW   ################################################################################################
+###########################################################################################################################################################################################
+
 @auth.requires_login()
 def index():
   response.flash = T("Welcome to web2py!")
   return dict(user_id=auth.user.id)
 
+  
+#This is off of chpater 3 in the manual
+def show():
+    #shows an event page
+    this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
+    form = SQLFORM(db.events).process()
+    return dict(events=this_event, form=form)
 
-# RSVP code begin   ################################################
+
+#This page lets you view the student org profiles.
+@auth.requires_login()
+def view_student_org():
+    student_orgs = db.student_org(request.args[0]) or redirect(URL('index'))
+    return dict(student_orgs=student_orgs, user_id = auth.user_id)
+
+
+###########################################################################################################################################################################################
+#################################################################################   RVSP   ################################################################################################
+###########################################################################################################################################################################################
+
 @auth.requires_login()
 def rsvp():
   ### Created by Desmond. Query and return all the events the user is RSVP'd yes or maybe to ###
@@ -20,6 +40,7 @@ def rsvp():
   #print rows
   column_sorting_ajax_url = URL('update_rsvp_column_sort')
   return dict(user_id=auth.user.id, rows=rows, column_sorting_ajax_url=column_sorting_ajax_url)
+  
   
 def update_rsvp_column_sort():
   ### Created by Desmond. A ajax callback function that will determine which button should be selected and the order of the data ###
@@ -65,6 +86,38 @@ def update_rsvp_column_sort():
   return cmd
 # RSVP code end   ##################################################
   
+  
+###########################################################################################################################################################################################
+#################################################################################   SEARCH   ##############################################################################################
+###########################################################################################################################################################################################
+
+#This is off of chapter 3 in the manual
+def search():
+     return dict(form=FORM(INPUT(_id='keyword',_name='keyword', 
+                                 _onkeyup="ajax('callback', ['keyword'], 'target');")), 
+                                 target_div=DIV(_id='target'))
+
+
+#This is off of chapter 3 in the manual
+def callback():
+    #returns a <url> of links to events
+    query = db.events.name.contains(request.vars.keyword)
+    events = db(query).select(orderby=db.events.name)
+    links = [A(e.name, _href=URL('show',args=e.id)) for e in events]
+    return UL(*links)
+    
+
+###########################################################################################################################################################################################
+#################################################################################   ADMIN   ###############################################################################################
+###########################################################################################################################################################################################
+
+#Temporary admin page.
+@auth.requires_login()
+def admin_page():
+    student_org = db(db.student_org.admins==auth.user_id).select(db.student_org.ALL, orderby=~db.student_org.join_date)
+    return dict(student_org=student_org,user_id=auth.user_id)
+
+    
 @auth.requires_login()
 def org_admin():
   ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
@@ -83,85 +136,61 @@ def org_admin():
     org_acronyms_ids.append((rows[idx]['acronym'],rows[idx]['id']))
   return dict(curr_id=curr_id,org_acronyms_ids=org_acronyms_ids,curr_org_info=curr_org_info)
 
-
-#This is off of chpater 3 in the manual
-def show():
-    #shows an event page
-    this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
-    #dbg.set_trace() ####BREAKPOINT###
-    form = SQLFORM(db.events).process()
-    #dbg.set_trace() ####BREAKPOINT###
-    return dict(events=this_event, form=form)
-
-
-#This is off of chapter 3 in the manual
-def search():
-     return dict(form=FORM(INPUT(_id='keyword',_name='keyword', 
-                                 _onkeyup="ajax('callback', ['keyword'], 'target');")), 
-                                 target_div=DIV(_id='target'))
-
-
-#This is off of chapter 3 in the manual
-def callback():
-    #returns a <url> of links to events
-    query = db.events.name.contains(request.vars.keyword)
-    events = db(query).select(orderby=db.events.name)
-    links = [A(e.name, _href=URL('show',args=e.id)) for e in events]
-    return UL(*links)
-
+  
+#This is the page where you add a student org.
+@auth.requires_login()
+def add_student_org():
+    form = SQLFORM(db.student_org, upload=URL('download'))
+    if form.process().accepted:
+        #session.flash displays a message after redirection
+        session.flash = T('New student organization successfully created!')
+        redirect(URL('index'))
+    return dict(form=form)
 
     
-    
-    
-    
-    
-    
-    
-# BOILERPLATE is below....    
-    
+#This page allows you to edit a student org.
+@auth.requires_login()
+def edit_student_org():
+     student_orgs = db.student_org(request.args(0,cast=int)) or redirect(URL('index'))
+     form = SQLFORM(db.student_org, student_orgs).process(
+         next = URL('view_student_org',args=request.args))
+     return dict(form=form)
+
+     
+#This page allows you to delete a student org.
+@auth.requires_login()
+def delete_student_org():
+    student_orgs = db.student_org(request.args[0]) or redirect(URL('index'))
+    #if auth.user_id != student_orgs.admins:
+    #    session.flash = T("Authorization error")
+    #    redirect(URL('index'))
+    form = SQLFORM.factory()
+    if form.process().accepted:
+        db(db.student_org.id == request.args[0]).delete()
+        session.flash = T(student_orgs.name + ' was deleted')
+        redirect(URL('index'))
+    return dict(form=form, student_orgs=student_orgs)#, user=auth.user)
+
+
+###########################################################################################################################################################################################
+#####################################################################################   web2py   ##########################################################################################
+###########################################################################################################################################################################################
+
 def user():
-  """
-  exposes:
-  http://..../[app]/default/user/login
-  http://..../[app]/default/user/logout
-  http://..../[app]/default/user/register
-  http://..../[app]/default/user/profile
-  http://..../[app]/default/user/retrieve_password
-  http://..../[app]/default/user/change_password
-  http://..../[app]/default/user/manage_users (requires membership in
-  use @auth.requires_login()
-      @auth.requires_membership('group name')
-      @auth.requires_permission('read','table name',record_id)
-  to decorate functions that need access control
-  """
   return dict(form=auth())
 
 
 @cache.action()
 def download():
-  """
-  allows downloading of uploaded files
-  http://..../[app]/default/download/[filename]
-  """
   return response.download(request, db)
 
 
 def call():
-  """
-  exposes services. for example:
-  http://..../[app]/default/call/jsonrpc
-  decorate with @services.jsonrpc the functions to expose
-  supports xml, json, xmlrpc, jsonrpc, amfrpc, rss, csv
-  """
   return service()
 
 
 @auth.requires_login()
 def api():
-    """
-    this is example of API with access control
-    WEB2PY provides Hypermedia API (Collection+JSON) Experimental
-    """
     from gluon.contrib.hypermedia import Collection
     rules = {
         '<tablename>': {'GET':{},'POST':{},'PUT':{},'DELETE':{}},

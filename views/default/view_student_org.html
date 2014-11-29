@@ -1,0 +1,45 @@
+{{extend 'layout.html'}}
+
+<style>
+.light {
+	color: #B2B2B2;
+}
+</style>
+
+<script type="text/javascript">
+function index()
+{
+	window.location = "{{=URL('index')}}";
+}
+</script>
+
+<h2>{{=student_orgs.name}} ({{=student_orgs.acronym}})</h2>
+<p class="light">Joined on {{=student_orgs.join_date}}</p>
+<br>
+<h4>Description:</h4>
+<p>{{=student_orgs.description}}</p>
+<br>
+<h4>Meeting Location:</h4>
+<p>{{=student_orgs.meeting_location}}</p>
+<br>
+<h4>Meeting Times:</h4>
+<p>{{=student_orgs.meeting_times}}</p>
+<br>
+<h4>Website:</h4>
+<p>{{=student_orgs.website}}</p>
+<br>
+<h4>Email:</h4>
+<p>{{=student_orgs.email}}</p>
+<br>
+<h4>Leaders:</h4>
+<p>{{=student_orgs.leaders}}</p>
+<br>
+<center>
+<img width="200px"
+     src="{{=URL('download', args=student_orgs.picture)}}" /> </center>
+<br>
+
+{{=BUTTON('Back', _onclick="index()")}}
+
+<!--Temp admin page button-->
+<p>{{=A('Admin Page', _class='btn', _href=URL('admin_page'))}}</p>
