@@ -10,8 +10,9 @@ from gluon.debug import dbg
 
 @auth.requires_login()
 def index():
-  response.flash = T("Welcome to web2py!")
-  return dict(user_id=auth.user.id)
+  response.flash = T("Welcome to EventCentral!")
+  admin = db((request.args(0) == db.admin_pool.student_id)).select()
+  return dict(user_id=auth.user.id, admin=admin)
 
 
 #This page lets you view the student org profiles.
@@ -69,6 +70,7 @@ def add_student_org():
         redirect(URL('index'))
     return dict(form=form)
 
+
 #This page allows you to edit a student org.
 @auth.requires_login()
 def edit_student_org():
@@ -76,6 +78,7 @@ def edit_student_org():
      form = SQLFORM(db.student_org, student_orgs).process(
          next = URL('view_student_org',args=request.args))
      return dict(form=form)
+
 
 #This page allows you to delete a student org.
 @auth.requires_login()
@@ -110,25 +113,33 @@ def rsvp():
 ######################################################################
 
 
-# off of chapter 3 in the manual
 def search():
      return dict(form=FORM(INPUT(_id='keyword',_name='keyword', 
                                  _onkeyup="ajax('callback', ['keyword'], 'target');")), 
                                  target_div=DIV(_id='target'))
 
 
-# off of chapter 3 in the manual
 def callback():
     #returns a <url> of links to events
-    query = db.events.name.contains(request.vars.keyword)
+    query = db.events.name.contains(request.vars.keyword)                  #query events
+    tquery = db(db.tag.name.contains(request.vars.keyword)).select()       #query tag
+    for t in tquery:
+        if t:
+            etquery = db(db.event_tags.tag_id == t.id).select()            #query event_tags that contain tag
+        for e in etquery:
+            if e:
+                etquery2 = db.events.id == e.event_id                       #query events that match event_id of event_tags
+                query = query | etquery2                                    #add to original query leaving out copies
     events = db(query).select(orderby=db.events.name)
     links = [A(e.name, _href=URL('view_event',args=e.id)) for e in events]
     return UL(*links)
 
 
+
 ######################################################################
 #############################   WEB2PY   #############################
 ######################################################################
+
 
 def user():
   return dict(form=auth())
