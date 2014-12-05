@@ -115,79 +115,53 @@ def rsvp():
 
 #form for the search function
 def search():
-     return dict(form=FORM(INPUT(_id='keyword',_name='keyword', 
-                                 _onkeyup="ajax('callback', ['keyword'], 'target');")), 
+     return dict(form=FORM(INPUT(_id='keyword',_name='keyword',
+                                 _onkeyup="ajax('eventCallback', ['keyword'], 'target');")),
                                  target_div=DIV(_id='target'))
-
-
-#checks event tags
-def checketags(query, sinput):
-    tquery = db(db.tag.name.contains(sinput)).select()                     #query tag
-    for t in tquery:
-        if t:
-            etquery = db(db.event_tags.tag_id == t.id).select()            #query event_tags that contain tag
-        for e in etquery:
-            if e:
-                etquery2 = db.events.id == e.event_id                      #query events that match event_id of event_tags
-                query = query | etquery2                                   #add to original query leaving out copies
-    return dict(query)
-
-
-#checks student organization tags
-def checksotags():
-    return dict()
-
-
-#checks student tags
-def checkstags():
-    return dict()
-
-
-#checks student organizations
-def checkorgs():
-    oquery = db(db.student_org.name.contains(request.vars.keyword)).select()
-    for o in oquery:
-        if o:
-            oequery = db(db.events.student_org_id.id == o.id).select
-            query = query | oequery
-    return dict()
 
 
 #function called by search, calls other query functions and generates list with links
 #currently only displays event links, working on getting 
-def callback():
+def eventCallback():
     #returns a <url> of links to events
 
     ### events ###
-    query = db.events.name.contains(request.vars.keyword)                 #query events
+    query = db.events.name.contains(request.vars.keyword)                                #query events
+
+    ### student organizations  ###
+    oquery = db(db.student_org.name.contains(request.vars.keyword)).select()             #query student orgnaization names
+    for o in oquery:
+        if o:
+            oequery = db.events.student_org_id == o.id                                   #query for events by student org
+            query = query | oequery                                                      #add to original query leaving out copies
+
+    ###  students  ###
+    """
+    squery = db(db.student.student_name.contains(request.vars.keyword)).select()         #query student
+    for s in squery:
+        sequery = db.events.creator == s.id                                              #this line is still not compatible with the database
+        query = query | sequery
+    """
 
     ### tags ###
-    tquery = db(db.tag.name.contains(request.vars.keyword)).select()       #query tag
+    tquery = db(db.tag.name.contains(request.vars.keyword)).select()                     #query tag
     for t in tquery:
         if t:
             ### event tags
-            etquery = db(db.event_tags.tag_id == t.id).select()            #query event_tags that contain tag
+            etquery = db(db.event_tags.tag_id == t.id).select()                          #query event_tags that contain tag
             if etquery:
                 for e in etquery:
-                        etquery2 = db.events.id == e.event_id                  #query events that match event_id of event_tags
-                        query = query | etquery2                               #add to original query leaving out copies
+                    etquery2 = db.events.id == e.event_id                                #query events that match event_id of event_tags
+                    query = query | etquery2                                             #add to original query leaving out copies
+
             ### student organization tags
             soquery = db(db.student_org_tags.tag_id == t.id).select()
             if soquery:
                 for s in soquery:
-                        soquery2 = db.events.student_org == s.student_org_id
-                        query = query | soquery2
+                    soquery2 = db.events.student_org_id == s.student_org_id
+                    query = query | soquery2
 
-    ### checksotags ###
-
-    ### checkstags ###
-
-    ### student organizations  ###
-    oquery = db(db.student_org.name.contains(request.vars.keyword)).select()
-    for o in oquery:
-        if o:
-            oequery = db.events.student_org_id == o.id
-            query = query | oequery
+            ### student tags
 
     events = db(query).select(orderby=db.events.name)
     links = [A(e.name, _href=URL('view_event',args=e.id)) for e in events]
