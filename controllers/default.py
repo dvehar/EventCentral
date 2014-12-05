@@ -119,9 +119,13 @@ def search():
                                  _onkeyup="ajax('eventCallback', ['keyword'], 'target');")),
                                  target_div=DIV(_id='target'))
 
+def view_all_events():
+    events = db(db.events.id >0).select(orderby=db.events.name)
+    links = [A(e.name, _href=URL('view_event',args=e.id)) for e in events]
+    return UL(*links)
 
 #function called by search, calls other query functions and generates list with links
-#currently only displays event links, working on getting 
+#currently only displays event links, working on getting
 def eventCallback():
     #returns a <url> of links to events
 
