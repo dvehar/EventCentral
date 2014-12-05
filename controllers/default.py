@@ -157,23 +157,32 @@ def checkorgs():
 #currently only displays event links, working on getting 
 def callback():
     #returns a <url> of links to events
-    query = db.events.name.contains(request.vars.keyword)                  #query events
 
-    ### checketags ###
+    ### events ###
+    query = db.events.name.contains(request.vars.keyword)                 #query events
+
+    ### tags ###
     tquery = db(db.tag.name.contains(request.vars.keyword)).select()       #query tag
     for t in tquery:
         if t:
+            ### event tags
             etquery = db(db.event_tags.tag_id == t.id).select()            #query event_tags that contain tag
-        for e in etquery:
-            if e:
-                etquery2 = db.events.id == e.event_id                      #query events that match event_id of event_tags
-                query = query | etquery2                                   #add to original query leaving out copies
+            if etquery:
+                for e in etquery:
+                        etquery2 = db.events.id == e.event_id                  #query events that match event_id of event_tags
+                        query = query | etquery2                               #add to original query leaving out copies
+            ### student organization tags
+            soquery = db(db.student_org_tags.tag_id == t.id).select()
+            if soquery:
+                for s in soquery:
+                        soquery2 = db.events.student_org == s.student_org_id
+                        query = query | soquery2
 
     ### checksotags ###
 
     ### checkstags ###
 
-    ### checkorgs ###
+    ### student organizations  ###
     oquery = db(db.student_org.name.contains(request.vars.keyword)).select()
     for o in oquery:
         if o:
