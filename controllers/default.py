@@ -130,7 +130,6 @@ def checketags(query, sinput):
             if e:
                 etquery2 = db.events.id == e.event_id                      #query events that match event_id of event_tags
                 query = query | etquery2                                   #add to original query leaving out copies
-    dbg.set_trace() ###BREAKPOINT###
     return dict(query)
 
 
@@ -159,6 +158,8 @@ def checkorgs():
 def callback():
     #returns a <url> of links to events
     query = db.events.name.contains(request.vars.keyword)                  #query events
+
+    ### checketags ###
     tquery = db(db.tag.name.contains(request.vars.keyword)).select()       #query tag
     for t in tquery:
         if t:
@@ -167,6 +168,18 @@ def callback():
             if e:
                 etquery2 = db.events.id == e.event_id                      #query events that match event_id of event_tags
                 query = query | etquery2                                   #add to original query leaving out copies
+
+    ### checksotags ###
+
+    ### checkstags ###
+
+    ### checkorgs ###
+    oquery = db(db.student_org.name.contains(request.vars.keyword)).select()
+    for o in oquery:
+        if o:
+            oequery = db.events.student_org_id == o.id
+            query = query | oequery
+
     events = db(query).select(orderby=db.events.name)
     links = [A(e.name, _href=URL('view_event',args=e.id)) for e in events]
     return UL(*links)
