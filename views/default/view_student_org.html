@@ -33,7 +33,6 @@ function index()
 <br>
 <h4>Leaders:</h4>
 {{rows = db(db.student_org.id==db.admin_pool.student_org_id).select()}}
-{{#name = db(db.admin_pool.student_id==db.student.id).select()}}
     {{for row in rows:}}
         <p>{{=row.admin_pool.title}} : {{=row.admin_pool.student_id.student_name.first_name}} {{=row.admin_pool.student_id.student_name.last_name}}</p>
     {{pass}}
@@ -46,14 +45,11 @@ Button to edit picture
 {{if db(db.picture.picture_owner_is_student_org == True and
                  db.picture.id_of_picture_owner == student_orgs.id).select():}}
     {{pics = db(db.picture.picture_owner_is_student_org == False and
-                 db.picture.id_of_picture_owner == event.id).select()}}
-    {{for pic in pics:}}
+                 db.picture.id_of_picture_owner == student_orgs.id).select().last()}}
 <center>
 <img width="200px"
-     src="{{=URL('download', args=pic.id)}}" /> </center>
+     src="{{=URL('download', args=pics.image)}}" /> </center>
 <br>
-    {{pass}}
-    {{=A('Edit Picture', _class = 'btn',  _href=URL('default', 'add_student_org_picture', args=[student_org.id]))}}
 {{pass}}
 
 <!--
@@ -67,8 +63,9 @@ Places neither if the user is not logged in
             {{admin = True}}
     {{pass}}
     {{if admin == True:}}
-            {{=A('Edit Student Org', _class = 'btn',  _href=URL('default', 'edit_student_org', args=[student_org.id]))}}
-            {{=A('Delete Student Org', _class = 'btn',  _href=URL('default', 'delete_student_org', args=[student_org.id]))}}
+            {{=A('Edit Picture', _class = 'btn',  _href=URL('default', 'add_student_org_picture', args=[student_orgs.id]))}}
+            {{=A('Edit Student Org', _class = 'btn',  _href=URL('default', 'edit_student_org', args=[student_orgs.id]))}}
+            {{=A('Delete Student Org', _class = 'btn',  _href=URL('default', 'delete_student_org', args=[student_orgs.id]))}}
     {{pass}}
 {{pass}}
 

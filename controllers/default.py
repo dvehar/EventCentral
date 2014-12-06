@@ -278,15 +278,6 @@ def callback():
 ###########################################################################################################################################################################################
 
 
-#Temporary admin page.
-@auth.requires_login()
-def admin_page():
-    student_org = db(db.student_org.admins==auth.user_id).select(db.student_org.ALL, orderby=~db.student_org.join_date)
-    return dict(student_org=student_org,user_id=auth.user_id)
-
-def download():
-    return response.download(request, db)
-
 @auth.requires_login()
 def org_admin():
   ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
@@ -367,9 +358,6 @@ def edit_student_org():
 @auth.requires_login()
 def delete_student_org():
     student_orgs = db.student_org(request.args[0]) or redirect(URL('index'))
-    #if auth.user_id != student_orgs.admins:
-    #    session.flash = T("Authorization error")
-    #    redirect(URL('index'))
     form = SQLFORM.factory()
     if form.process().accepted:
         db(db.student_org.id == request.args[0]).delete()
@@ -379,7 +367,7 @@ def delete_student_org():
 
 @auth.requires_login()
 def add_student_org_picture():
-    if is_admin(request.args(0)):
+    if is_student_org_admin(request.args(0)):
         db.picture.id_of_picture_owner.default = request.args(0)
         db.picture.picture_owner_is_student_org.default = True
         form = SQLFORM(db.picture)
@@ -388,7 +376,21 @@ def add_student_org_picture():
         return dict(form = form)
     else:
         redirect(URL('view_student_org', args=(request.args(0))))
+        
+#This page lets you view the student org profiles.
+@auth.requires_login()
+def view_student_org():
+    student_orgs = db.student_org(request.args[0]) or redirect(URL('index'))
+    return dict(student_orgs=student_orgs, user_id = auth.user_id)
 
+@auth.requires_login()
+def is_student_org_admin(student_org_id):
+    student_orgs = db.student_org(student_org_id)
+    student = db(db.student.student_name == auth.user.id).select().first()
+    if db( (db.admin_pool.student_org_id == student_orgs.id) & (db.admin_pool.student_id == student) ).select():
+        return True
+    else:
+        return False
 
 ###########################################################################################################################################################################################
 #####################################################################################   web2py   ##########################################################################################
