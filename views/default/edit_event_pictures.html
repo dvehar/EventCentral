@@ -1,0 +1,19 @@
+{{extend 'layout.html'}}
+
+
+{{if db(db.picture.picture_owner_is_student_org == False and
+                 db.picture.id_of_picture_owner == event.id).select():}}
+    <h3>
+        Pictures
+    </h3>
+    {{pics = db(db.picture.picture_owner_is_student_org == False and
+                 db.picture.id_of_picture_owner == event.id).select()}}
+    {{for pic in pics:}}
+            <img src="{{=URL('download', args=pic.image)}}"  style = "width:200px;height:200px" />
+            {{=A('Delete?', _class = 'btn', _href=URL('default', 'delete_picture', args=[event.id,pic.id]) )}}
+            <br>
+    {{pass}}
+{{pass}}
+
+{{=A('Add picture', _class = 'btn', _href=URL('default', 'add_picture', args=[event.id,auth.user_id]) )}}
+{{=A('Return', _class = 'btn', _href=URL('default', 'event', args=[event.id]) )}}
