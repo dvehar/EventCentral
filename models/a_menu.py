@@ -6,7 +6,7 @@
 #########################################################################
 
 response.logo = A(B('EventCentral'),XML('&trade;&nbsp;'),
-                  _class="brand",_href="http://www.web2py.com/")
+                  _class="brand",_href=URL('default','index'))
 response.title = request.application.replace('_',' ').title()
 response.subtitle = ''
 
