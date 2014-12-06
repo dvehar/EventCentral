@@ -169,6 +169,17 @@ def delete_student_org():
         redirect(URL('index'))
     return dict(form=form, student_orgs=student_orgs)#, user=auth.user)
 
+@auth.requires_login()
+def add_student_org_picture():
+    if is_admin(request.args(0)):
+        db.picture.id_of_picture_owner.default = request.args(0)
+        db.picture.picture_owner_is_student_org.default = True
+        form = SQLFORM(db.picture)
+        if form.process().accepted:
+            redirect(URL('view_student_org', args=(request.args(0)) ))
+        return dict(form = form)
+    else:
+        redirect(URL('view_student_org', args=(request.args(0))))
 
 ###########################################################################################################################################################################################
 #####################################################################################   web2py   ##########################################################################################
