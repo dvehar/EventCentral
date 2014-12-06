@@ -1,5 +1,26 @@
 {{extend 'layout.html'}}
 
+<style>
+    div.boxed{
+        margin:5px;
+        padding:5px;
+        padding-bottom:15px;
+        padding-left:15px;
+        border-width:5px;
+        border-style:solid;
+        height:auto;
+        width:auto;
+    }
+    div.comment{
+        margin:5px;
+        padding:15px;
+        border-width:2px;
+        border-style: dashed;
+        height:auto;
+        width:auto;
+    }
+</style>
+
 <img src="{{=URL('download', args=pic.image)}}" />
 <br>
 {{event = db.events(pic.id_of_picture_owner)}}
@@ -7,45 +28,48 @@
 {{if auth.user:}}
     {{student = db(db.student.student_name == auth.user.id).select().first()}}
     {{if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == student) ).select() :}}
-            {{me = db( (db.admin_pool.student_org_id == event.student_org_id) and (db.admin_pool.student_id == student) ).select().first()}}
-            {{=me.id}}
+            {{admin = True}}
     {{pass}}
 {{pass}}
 <br><br>
 <!--
     Comments section
 -->
-
+<div class = "boxed">
 {{if db( (db.pic_comments.picid == pic.id) & (db.pic_comments.comment_type == 0) ).select():}}
     <h3>
     Comments:
     </h3>
-    <table>
-    <tr>
-        <th>Name</th>
-        <th>Comment</th>
-        {{if admin is True:}}
-            <th>Delete post?</th>
-        {{pass}}
-    </tr>
     {{
     comments = db((db.pic_comments.picid == pic.id) & (db.pic_comments.comment_type == 0)).select(orderby = ~db.pic_comments.creation_time)
     }}
 
     {{for comment in comments:}}
-        <tr>
-            <td>{{=comment.poster_id.student_name.first_name}}</td>
-            <td>{{=comment.contents}}</td>
-            {{if admin is True:}}
-                <td>{{=A('Delete post', _href = URL('default','delete_pic_post', args=[pic.id, comment.id]))}}</td>
+        <div class = "comment">
+        By:<i>{{=comment.poster_id.student_name.first_name}}</i><br>
+        {{=comment.contents}}
+
+            {{if db( (db.comment_replies.comment_id == comment.id)&(db.comment_replies.comment_type ==1) ).select():}}
+                {{replies = db((db.comment_replies.comment_id == comment.id)&(db.comment_replies.comment_type ==1)).select(orderby = ~db.comment_replies.creation_time)}}
+                {{for reply in replies:}}
+                    <div class = "comment">
+                    By:<i>{{=reply.poster_id.student_name.first_name}}</i><br>
+                    {{=reply.contents}}
+                    </div>
+                {{pass}}
             {{pass}}
-        </tr>
+
+        <br><br>{{=A('Reply', _href=URL('default', 'reply_post',args=[event.id,comment.id,1]))}}
+        {{if admin is True:}}
+           &emsp;&emsp;{{=A('Delete post', _href = URL('default','delete_post', args=[event.id, comment.id]))}}
+        {{pass}}
+        </div>
     {{pass}}
-    </table>
 {{pass}}
 {{if auth.user:}}
     {{=A('Make a post', _class = 'btn', _href=URL('default', 'pic_post', args=[pic.id, auth.user_id, 0]))}}
 {{pass}}
+</div>
 <br>
 
-{{=A('Return', _class = 'btn', _href=URL('default', 'event', args=[event.id]) )}}
+{{=A('Return', _class = 'btn', _href=URL('default', 'view_event', args=[event.id]) )}}
