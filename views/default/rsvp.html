@@ -32,7 +32,7 @@
     <!--{{print row.events.end_time.hour}}-->
     <!--{{print end_time_hour}}-->
     <!--{{print "()()"}}-->
-    
+
     {{if (row.events.start_time.year != datetime.now().year):}}
       {{put_year_start = True}}
     {{pass}}
@@ -57,7 +57,7 @@
       {{pass}}
     {{pass}}
     {{time_str += " " + str(end_time_hour) + ":" + str(row.events.end_time.minute).zfill(2) + ("PM" if row.events.end_time.hour >= 12 else "AM")}}
-    
+
     {{tmp.append(TR(
                   TD(A(row.events.name,_href=URL('default', 'event', args=[row.events.id]))), 
                   TD(A(row.student_org.name,_href=URL('default', 'rsvp', args=[row.student_org.id]))), # TODO put the correct page for viewing rsvps

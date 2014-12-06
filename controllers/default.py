@@ -122,12 +122,12 @@ def search():
 def view_all_events():
     events = db(db.events.id >0).select(orderby=db.events.name)
     links = [A(e.name, _href=URL('view_event',args=e.id)) for e in events]
-    return UL(*links)
+    return dict(target_div=UL(*links))
 
 #function called by search, calls other query functions and generates list with links
 #currently only displays event links, working on getting
 def eventCallback():
-    #returns a <url> of links to events
+    #returns links to events in relation to search input
 
     ### events ###
     query = db.events.name.contains(request.vars.keyword)                                #query events
@@ -140,17 +140,12 @@ def eventCallback():
             query = query | oequery                                                      #add to original query leaving out copies
 
     ###  students  ###
-    """
-    squery = db(db.student.student_name.contains(request.vars.keyword)).select()         #query student
-    for s in squery:
-        sequery = db.events.creator == s.id                                              #this line is still not compatible with the database
-        query = query | sequery
-    """
 
     ### tags ###
     tquery = db(db.tag.name.contains(request.vars.keyword)).select()                     #query tag
     for t in tquery:
         if t:
+
             ### event tags
             etquery = db(db.event_tags.tag_id == t.id).select()                          #query event_tags that contain tag
             if etquery:
@@ -168,8 +163,43 @@ def eventCallback():
             ### student tags
 
     events = db(query).select(orderby=db.events.name)
-    links = [A(e.name, _href=URL('view_event',args=e.id)) for e in events]
+    links = [A(e.name, _href=URL('view_event', args=e.id)) for e in events]
     return UL(*links)
+
+
+def studentOrgCallback():
+    #returns links of student org pages in relation to search input
+
+    ###  student orgs  ###
+    query = db.student_orgs.name.contains(request.vars.keyword)
+
+    ###  tags  ###
+    tquery = db(db.tag.name.contains(request.vars.keyword)).select()               #get all tags which name matchins seach input
+    for t in tquery:
+        if t:
+
+            ### event tags
+            etquery = db(db.event_tags.tag_id == t.id).select()                    #get all event_tags that match tag
+            if etquery:
+                for e in etquery:
+                    etquery2 = db.events.id == e.event_id                          #get all events that event_tags
+                    if equery2:
+                        for i in equery2:
+                            etquery3 = db.student_org == i.student_ort_id          #get student_org that created event
+                            query = query | etquery
+
+            ### student organization tags
+            squery = db(db.student_org_tags.tag_id == t.id).select()               #get all student_org_tags that match tag
+            if squery:
+                for s in squery:
+                    squery2 = db.student_org == s.student_org.id                   #get all student_orgs that match student_org_tag
+                    query = query | squery2
+
+            ### student tags
+
+    orgs = db(query).select(orderby=db.student_orgs.name)
+    links = [A(o.name, _href=URL('view_student_org', args.o.id)) for o in orgs]
+    return dict()
 
 
 ######################################################################
