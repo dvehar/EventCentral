@@ -133,7 +133,8 @@ def eventCallback():
     query = db.events.name.contains(request.vars.keyword)                                #query events
 
     ### student organizations  ###
-    oquery = db(db.student_org.name.contains(request.vars.keyword)).select()             #query student orgnaization names
+      #query student orgnaization names and acronym
+    oquery = db(db.student_org.name.contains(request.vars.keyword) | db.student_org.acronym.contains(request.vars.keyword)).select()
     for o in oquery:
         if o:
             oequery = db.events.student_org_id == o.id                                   #query for events by student org
