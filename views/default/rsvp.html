@@ -5,10 +5,10 @@
 {{from operator import itemgetter}}
 {{import time}}
 <p>{{=A('Find More Events', _class='btn', _href=URL('default', 'search'))}}</p> 
+{{rows_in_an_ary_py = []}}
 {{if len(rows) == 0:}}
   {{=(H3("You have no events"))}}
 {{else:}}
-  {{rows_in_an_ary_py = []}}
   {{=(H3("Here are the events you have RSVP'd to"))}}
   <!-- the column we sort by is underlined (assending) or overlined (descending) -->
   {{tmp = [TR(
