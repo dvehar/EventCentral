@@ -192,7 +192,10 @@ def reply_post():
     db.comment_replies.comment_type.default = request.args(2)
     form = SQLFORM(db.comment_replies)
     if form.process().accepted:
+        if (request.args(2) =='0'):
             redirect(URL('view_event', args=(request.args(0))))
+        if (request.args(2) =='1'):
+            redirect(URL('view_picture', args=(request.args(3))))
     return dict(form = form)
 
 @auth.requires_login()

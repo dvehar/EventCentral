@@ -59,7 +59,7 @@
                 {{pass}}
             {{pass}}
 
-        <br><br>{{=A('Reply', _href=URL('default', 'reply_post',args=[event.id,comment.id,1]))}}
+        <br><br>{{=A('Reply', _href=URL('default', 'reply_post',args=[event.id,comment.id,1,pic.id]))}}
         {{if admin is True:}}
            &emsp;&emsp;{{=A('Delete post', _href = URL('default','delete_post', args=[event.id, comment.id]))}}
         {{pass}}
