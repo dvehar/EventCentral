@@ -8,9 +8,10 @@ db.define_table('events',
                 Field('student_org_id', 'reference student_org', requires=IS_NOT_EMPTY()),
                 Field('place', 'string', requires=IS_NOT_EMPTY()),
                 Field('start_time', 'datetime', requires=IS_NOT_EMPTY()),
-		        Field('end_time', 'datetime', requires=IS_NOT_EMPTY()),
-		        Field('create_time', 'datetime', default=request.now)
-		        )
+                Field('end_time', 'datetime', requires=IS_NOT_EMPTY()),
+                Field('create_time', 'datetime', default=request.now)
+                )
 
 db.events.student_org_id.writable = db.events.student_org_id.readable = False
 db.events.create_time.writable = False
+#TODO force start time to be before end_time

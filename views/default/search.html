@@ -1,4 +1,5 @@
 {{extend 'layout.html'}}
-<h1>Search Events</h1>
-[  {{=A('listall', _href=URL('index'))}}]<br />
-{{=form}}<br />{{=target_div}}
+[  {{=A('list all ', _href=URL('view_all_events'))}}]<br />
+{{=form}}
+<h1>Events</h1>
+<br />{{=target_div}}

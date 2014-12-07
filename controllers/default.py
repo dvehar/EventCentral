@@ -13,16 +13,9 @@ from operator import itemgetter
 
 @auth.requires_login()
 def index():
-  response.flash = T("Welcome to web2py!")
-  return dict(user_id=auth.user.id)
-
-
-#This is off of chpater 3 in the manual
-def show():
-    #shows an event page
-    this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
-    form = SQLFORM(db.events).process()
-    return dict(events=this_event, form=form)
+  response.flash = T("Welcome to EventCentral!")
+  admin = db((request.args(0) == db.admin_pool.student_id)).select()
+  return dict(user_id=auth.user.id, admin=admin)
 
 
 #This page lets you view the student org profiles.
@@ -32,9 +25,30 @@ def view_student_org():
     return dict(student_orgs=student_orgs, user_id = auth.user_id)
 
 
+#This page lets you view the event page
+@auth.requires_login()
+def view_event():
+    this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
+    form = SQLFORM(db.events).process()
+    return dict(events=this_event, form=form)
+
+
+def view_all_events():
+    events = db(db.events.id >0).select(orderby=db.events.name)
+    links = [A(e.name, _href=URL('view_event',args=e.id)) for e in events]
+    return dict(target_div=UL(*links))
+
+
 ###########################################################################################################################################################################################
 #################################################################################   RVSP   ################################################################################################
 ###########################################################################################################################################################################################
+
+
+
+###########################################################################################################################################################################################
+#################################################################################   ADMIN   ###############################################################################################
+###########################################################################################################################################################################################
+
 
 #checks if a user is an admin of the given event
 @auth.requires_login()
@@ -46,10 +60,12 @@ def is_admin(event_id):
     else:
         return False
 
+
 #views an event
 def view_event():
     event = db.events(request.args(0))
     return dict(event = event)
+
 
 #allows an admin to delete and add pictures
 @auth.requires_login()
@@ -60,6 +76,7 @@ def edit_event_pictures():
     else:
         redirect(URL('view_event', args=[ request.args(0) ]))
 
+
 #shows the picture and its comments
 def view_picture():
     pic = db.picture(request.args(0))
@@ -67,6 +84,7 @@ def view_picture():
         session.flash = "Invalid request"
         redirect(URL('default', 'index'))
     return dict(pic = pic)
+
 
 #adds a picture to an event
 @auth.requires_login()
@@ -81,6 +99,7 @@ def add_event_picture():
     else:
         redirect(URL('event', args=(request.args(0))))
 
+
 #deletes a picture from an event
 @auth.requires_login()
 def delete_event_picture():
@@ -90,6 +109,7 @@ def delete_event_picture():
     redirect(URL('default','edit_event_pictures', args = (request.args(0)) ))
     return dict()
 
+
 #deletes an entire event
 @auth.requires_login()
 def delete_event():
@@ -97,6 +117,7 @@ def delete_event():
         db(db.events.id == request.args(0)).delete()
     redirect(URL('default','index') )
     return dict()
+
 
 #allows an admin to edit the details of an event
 @auth.requires_login()
@@ -112,6 +133,7 @@ def event_edit():
         redirect(URL('default','view_event', args = [request.args(0)] ))
     return dict(form = form)
 
+
 #RSVPs a user to an event
 @auth.requires_login()
 def RSVP_action():
@@ -123,6 +145,7 @@ def RSVP_action():
     redirect(URL('default', 'view_event', args = [request.args(0)]) )
     return dict()
 
+
 #alters an RSVP from yes to maybe or vice versa
 @auth.requires_login()
 def RSVP_change():
@@ -131,6 +154,7 @@ def RSVP_change():
         db(db.rsvp.id == request.args(0)).update(rsvp_yes_or_maybe = request.args(1))
     redirect(URL('view_event', args=[request.args(2)] ))
     return dict()
+
 
 #removes an RSVP from the database
 @auth.requires_login()
@@ -141,6 +165,7 @@ def unRSVP_action():
     redirect(URL('view_event', args=[request.args(1)] ))
     return dict()
 
+
 #allows an admin to delete a post from an event
 @auth.requires_login()
 def delete_post():
@@ -148,6 +173,7 @@ def delete_post():
         db(db.comments.id == request.args(1)).delete()
     redirect(URL('view_event', args=(request.args(0)) ))
     return dict()
+
 
 #allows an admin to delete a post from a picture
 @auth.requires_login()
@@ -158,10 +184,6 @@ def delete_pic_post():
     redirect(URL('view_picture', args=(request.args(0)) ))
     return dict()
 
-#@auth.requires_login()
-#def delete_reply_post():
-#    if 
-#    return dict()
 
 #posts a comment on an event
 @auth.requires_login()
@@ -172,8 +194,9 @@ def event_post():
     db.comments.comment_type.default = request.args(2)
     form = SQLFORM(db.comments)
     if form.process().accepted:
-            redirect(URL('view_event', args=(request.args(0)) ))
+        redirect(URL('view_event', args=(request.args(0)) ))
     return dict(form = form)
+
 
 #posts a comment on a picture
 @auth.requires_login()
@@ -186,6 +209,7 @@ def pic_post():
     if form.process().accepted:
             redirect(URL('view_picture', args=(request.args(0)) ))
     return dict(form = form)
+
 
 @auth.requires_login()
 def reply_post():
@@ -257,20 +281,90 @@ def update_rsvp_column_sort():
 ###########################################################################################################################################################################################
 
 
-#This is off of chapter 3 in the manual
+#form for the search function
 def search():
      return dict(form=FORM(INPUT(_id='keyword',_name='keyword',
-                                 _onkeyup="ajax('callback', ['keyword'], 'target');")),
+                                 _onkeyup="ajax('eventCallback', ['keyword'], 'target');")),
                                  target_div=DIV(_id='target'))
 
 
-#This is off of chapter 3 in the manual
-def callback():
-    #returns a <url> of links to events
-    query = db.events.name.contains(request.vars.keyword)
+#function called by search, calls other query functions and generates list with links
+#currently only displays event links, working on getting
+def eventCallback():
+    #returns links to events in relation to search input
+
+    ### events ###
+    query = db.events.name.contains(request.vars.keyword)                                #query events
+
+    ### student organizations  ###
+      #query student orgnaization names and acronym
+    oquery = db(db.student_org.name.contains(request.vars.keyword) | db.student_org.acronym.contains(request.vars.keyword)).select()
+    for o in oquery:
+        if o:
+            oequery = db.events.student_org_id == o.id                                   #query for events by student org
+            query = query | oequery                                                      #add to original query leaving out copies
+
+    ###  students  ###
+
+    ### tags ###
+    tquery = db(db.tag.name.contains(request.vars.keyword)).select()                     #query tag
+    for t in tquery:
+        if t:
+
+            ### event tags
+            etquery = db(db.event_tags.tag_id == t.id).select()                          #query event_tags that contain tag
+            if etquery:
+                for e in etquery:
+                    etquery2 = db.events.id == e.event_id                                #query events that match event_id of event_tags
+                    query = query | etquery2                                             #add to original query leaving out copies
+
+            ### student organization tags
+            soquery = db(db.student_org_tags.tag_id == t.id).select()
+            if soquery:
+                for s in soquery:
+                    soquery2 = db.events.student_org_id == s.student_org_id
+                    query = query | soquery2
+
+            ### student tags
+
     events = db(query).select(orderby=db.events.name)
-    links = [A(e.name, _href=URL('show',args=e.id)) for e in events]
+    links = [A(e.name, _href=URL('view_event', args=e.id)) for e in events]
     return UL(*links)
+
+
+def studentOrgCallback():
+    #returns links of student org pages in relation to search input
+
+    ###  student orgs  ###
+    query = db.student_orgs.name.contains(request.vars.keyword)
+
+    ###  tags  ###
+    tquery = db(db.tag.name.contains(request.vars.keyword)).select()               #get all tags which name matchins seach input
+    for t in tquery:
+        if t:
+
+            ### event tags
+            etquery = db(db.event_tags.tag_id == t.id).select()                    #get all event_tags that match tag
+            if etquery:
+                for e in etquery:
+                    etquery2 = db.events.id == e.event_id                          #get all events that event_tags
+                    if equery2:
+                        for i in equery2:
+                            etquery3 = db.student_org == i.student_ort_id          #get student_org that created event
+                            query = query | etquery
+
+            ### student organization tags
+            squery = db(db.student_org_tags.tag_id == t.id).select()               #get all student_org_tags that match tag
+            if squery:
+                for s in squery:
+                    squery2 = db.student_org == s.student_org.id                   #get all student_orgs that match student_org_tag
+                    query = query | squery2
+
+            ### student tags
+
+    orgs = db(query).select(orderby=db.student_orgs.name)
+    links = [A(o.name, _href=URL('view_student_org', args.o.id)) for o in orgs]
+    return dict()
 
 
 ###########################################################################################################################################################################################
@@ -307,6 +401,7 @@ def add_student_org():
         redirect(URL('index'))
     return dict(form=form)
 
+
 #This page allows you to edit a student org.
 @auth.requires_login()
 def edit_student_org():
@@ -329,21 +424,7 @@ def delete_student_org():
         session.flash = T(student_orgs.name + ' was deleted')
         redirect(URL('index'))
     return dict(form=form, student_orgs=student_orgs)#, user=auth.user)
-#This is off of chpater 3 in the manual
-def show():
-    #shows an event page
-    this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
-    #dbg.set_trace() ####BREAKPOINT###
-    form = SQLFORM(db.events).process()
-    #dbg.set_trace() ####BREAKPOINT###
-    return dict(events=this_event, form=form)
 
-
-#This is off of chapter 3 in the manual
-def search():
-     return dict(form=FORM(INPUT(_id='keyword',_name='keyword',
-                                 _onkeyup="ajax('callback', ['keyword'], 'target');")),
-                                 target_div=DIV(_id='target'))
 
 #This page allows you to edit a student org.
 @auth.requires_login()
@@ -382,6 +463,7 @@ def add_student_org_picture():
 def view_student_org():
     student_orgs = db.student_org(request.args[0]) or redirect(URL('index'))
     return dict(student_orgs=student_orgs, user_id = auth.user_id)
+
 
 @auth.requires_login()
 def is_student_org_admin(student_org_id):

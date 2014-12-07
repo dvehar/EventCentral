@@ -1,2 +1,4 @@
 {{extend 'layout.html'}}
+{{if len(admin) != 0: }} {{=A('Admin Page', _class='btn', _href=URL('default', 'admin_page', args=[user_id]))}}
+{{pass}}
 {{=A('To RSVP', _class='btn', _href=URL('default', 'rsvp', args=[user_id]))}}
