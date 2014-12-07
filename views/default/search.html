@@ -1,7 +1,5 @@
 {{extend 'layout.html'}}
-[  {{=A('list all', _href=URL('view_all_events'))}}]<br />
+[  {{=A('list all ', _href=URL('view_all_events'))}}]<br />
 {{=form}}
-{{ if len(target_div) == 0: }}
-  <h1> Events </h1>
-  <br />{{=target_div}}
-{{pass}}
+<h1>Events</h1>
+<br />{{=target_div}}
