@@ -358,8 +358,7 @@ def search():
                                  target_div=DIV(_id='target'))
 
 
-#function called by search, calls other query functions and generates list with links
-#currently only displays event links, working on getting
+#function called by search - generates list with links
 def eventCallback():
     #returns links to events in relation to search input
 
@@ -371,8 +370,7 @@ def eventCallback():
     oquery = db(db.student_org.name.contains(request.vars.keyword) | db.student_org.acronym.contains(request.vars.keyword)).select()
     for o in oquery:
         if o:
-            oequery = db.events.student_org_id == o.id                                   #query for events by student org
-            query = query | oequery                                                      #add to original query leaving out copies
+            query = query | (db.events.student_org_id == o.id)                           #query for events by student orgadd to original query leaving out copies
 
     ###  students  ###
 
@@ -385,15 +383,13 @@ def eventCallback():
             etquery = db(db.event_tags.tag_id == t.id).select()                          #query event_tags that contain tag
             if etquery:
                 for e in etquery:
-                    etquery2 = db.events.id == e.event_id                                #query events that match event_id of event_tags
-                    query = query | etquery2                                             #add to original query leaving out copies
+                    query = query | (db.events.id == e.event_id)                         #query events that match event_id of event_tags add to original query leaving out copies
 
             ### student organization tags
             soquery = db(db.student_org_tags.tag_id == t.id).select()
             if soquery:
                 for s in soquery:
-                    soquery2 = db.events.student_org_id == s.student_org_id
-                    query = query | soquery2
+                    query = query | (db.events.student_org_id == s.student_org_id)
 
             ### student tags
 
@@ -406,35 +402,38 @@ def studentOrgCallback():
     #returns links of student org pages in relation to search input
 
     ###  student orgs  ###
-    query = db.student_orgs.name.contains(request.vars.keyword)
+    query = db.student_org.name.contains(request.vars.keyword) | db.student_org.acronym.contains(request.vars.keyword)
+
+    ### events ###
+    equery = db(db.events.name.contains(request.vars.keyword)).select()
+    for e in equery:
+        if e:
+            query = query | (db.student_org.id == e.student_org_id)
 
     ###  tags  ###
     tquery = db(db.tag.name.contains(request.vars.keyword)).select()               #get all tags which name matchins seach input
     for t in tquery:
         if t:
-
             ### event tags
             etquery = db(db.event_tags.tag_id == t.id).select()                    #get all event_tags that match tag
             if etquery:
                 for e in etquery:
-                    etquery2 = db.events.id == e.event_id                          #get all events that event_tags
-                    if equery2:
-                        for i in equery2:
-                            etquery3 = db.student_org == i.student_ort_id          #get student_org that created event
-                            query = query | etquery
+                    etquery2 = db(db.events.id == e.event_id).select()             #get all events that event_tags
+                    if etquery2:
+                        for i in etquery2:
+                            query = query | (db.student_org.id == i.student_org_id)#get student_org that created event
 
             ### student organization tags
             squery = db(db.student_org_tags.tag_id == t.id).select()               #get all student_org_tags that match tag
             if squery:
                 for s in squery:
-                    squery2 = db.student_org == s.student_org.id                   #get all student_orgs that match student_org_tag
-                    query = query | squery2
+                    query = query | (db.student_org.id == s.student_org_id)        #get all student_orgs that match student_org_tag
 
             ### student tags
 
-    orgs = db(query).select(orderby=db.student_orgs.name)
-    links = [A(o.name, _href=URL('view_student_org', args.o.id)) for o in orgs]
-    return dict()
+    orgs = db(query).select(orderby=db.student_org.name)
+    links = [A(o.name, _href=URL('view_student_org', args=o.id)) for o in orgs]
+    return UL(*links)
 
 
 ###########################################################################################################################################################################################
