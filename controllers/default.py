@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
+### Imports ###
 from gluon.debug import dbg
 import json 
 from operator import itemgetter
-
 
 
 ###########################################################################################################################################################################################
@@ -230,6 +230,7 @@ def delete_student_org():
         session.flash = T(student_orgs.name + ' was deleted')
         redirect(URL('index'))
     return dict(form=form, student_orgs=student_orgs)
+
 
 @auth.requires_login()
 def add_student_org_picture():
