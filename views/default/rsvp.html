@@ -4,7 +4,9 @@
 <!-- Note: begin_time is used for sorting the time column -->
 {{from operator import itemgetter}}
 {{import time}}
+
 <p>{{=A('Find More Events', _class='btn', _href=URL('default', 'search'))}}</p> 
+
 {{rows_in_an_ary_py = []}}
 {{if len(rows) == 0:}}
   {{=(H3("You have no events"))}}

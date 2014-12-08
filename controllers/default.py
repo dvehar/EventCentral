@@ -30,7 +30,17 @@ def view_student_org():
 def view_event():
     this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
     form = SQLFORM(db.events).process()
-    return dict(events=this_event, form=form)
+    # todo query for stuff
+    rsvp_row = db( (db.student.student_name == auth.user.id) & (auth.user.id == db.student.student_name) & (db.rsvp.student_id == auth.user.id) & (db.rsvp.event_id == request.args(0, cast=int)) ).select(db.rsvp.ALL).first()
+    if (rsvp_row == None):
+      rsvp_type = ''
+      rsvp_id = -1
+    else:
+      rsvp_type = rsvp_row['rsvp_yes_or_maybe']
+      rsvp_id = rsvp_row['id']
+    rsvp_change_callback = URL('rsvp_action_callback')
+    rsvp_remove_callback = URL('un_rsvp_action_callback')
+    return dict(events=this_event, form=form, rsvp_type=rsvp_type, rsvp_id=rsvp_id, user_id=auth.user.id, rsvp_change_callback=rsvp_change_callback, rsvp_remove_callback=rsvp_remove_callback)
 
 
 def view_all_events():
@@ -102,7 +112,43 @@ def unRSVP_action():
     redirect(URL('view_event', args=[request.args(1)] ))
     return dict()
 
-
+def un_rsvp_action_callback():
+  ### rsvp no: delete the rsvp entry - Desmond ###
+  v = request.vars.msg or ''
+  if (v != ''):
+    v = json.loads(v)
+    rsvp_id = v['rsvp_id']
+    db(db.rsvp.id == rsvp_id).delete()
+    return response.json(dict(errors=""))
+        
+  return response.json(dict(errors="there were errors"))
+    
+def rsvp_action_callback():
+  ### rsvp yes or maybe. can be used to update a rsvp type as well. to cancel an rsvp use the other callback -Desmond ###
+  v = request.vars.msg or ''
+  
+  if (v != ''):
+    v = json.loads(v)
+    user_id = v['user_id']
+    rsvp_type = v['rsvp_type']
+    event_id = v['event_id']
+    if (rsvp_type == "Yes" or rsvp_type == "Maybe"):
+      print "77   " + str(auth.user)
+      # try to fetch the event rsvp. query where student is in auth table and rsvp table. and the event id matches the rsvp event id.
+      current_rsvp = db( (db.student.student_name == user_id) & (auth.user.id == db.student.student_name) & (db.rsvp.student_id == user_id) & (db.rsvp.event_id == event_id) ).select(db.rsvp.ALL)
+      if (len(current_rsvp) == 0):
+        # create a new rsvp
+        db.rsvp.insert(event_id=event_id, student_id=user_id, rsvp_yes_or_maybe=(rsvp_type == "Yes"))
+      else: # len should be 1
+        # update the current_rsvp
+        new_rsvp_type_value = (rsvp_type == "Yes")
+        if current_rsvp.first()['rsvp_yes_or_maybe'] != new_rsvp_type_value:        
+          current_rsvp.first().update_record(rsvp_yes_or_maybe=new_rsvp_type_value)
+      
+      return response.json(dict(errors=""))
+      
+  return response.json(dict(errors="there were errors"))
+  
 @auth.requires_login()
 def rsvp():
   ### Created by Desmond. Query and return all the events the user is RSVP'd yes or maybe to ###
@@ -414,9 +460,12 @@ def eventCallback():
             ### student tags
 
     events = db(query).select(orderby=db.events.name)
-    links = [A(e.name, _href=URL('view_event', args=e.id)) for e in events]
-    return UL(*links)
-
+    
+    if (len(events) == 0):
+      return P("No Events Found")
+    else:
+      links = [A(e.name, _href=URL('view_event', args=e.id)) for e in events]
+      return UL(*links)
 
 def studentOrgCallback():
     #returns links of student org pages in relation to search input
@@ -452,8 +501,11 @@ def studentOrgCallback():
             ### student tags
 
     orgs = db(query).select(orderby=db.student_org.name)
-    links = [A(o.name, _href=URL('view_student_org', args=o.id)) for o in orgs]
-    return UL(*links)
+    if (len(orgs) == 0):
+      return P("No Orgs Found")
+    else:
+      links = [A(o.name, _href=URL('view_student_org', args=o.id)) for o in orgs]
+      return UL(*links)
 
 
 ###########################################################################################################################################################################################

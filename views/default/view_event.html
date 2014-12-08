@@ -17,4 +17,62 @@
     <h4><p>Starts: <i>{{=events.start_time}}</i> Ends: <i>{{=events.end_time}}</i></p></h4>
 </h3>
 
+<h3>
+    Update RSVP:
+    {{=A('Yes', _class='btn', _id="rsvp_yes_btn")}}
+    {{=A('Maybe', _class='btn', _id="rsvp_maybe_btn")}}
+    {{=A('No', _class='btn', _id="rsvp_cancel_btn")}} 
+</h3>
+
 {{=A('View Student Org', _class='btn', _href=URL('view_student_org', args=[events.student_org_id]))}}
+
+
+<script>
+$(document).ready(function() {
+  // all rsvp 3 buttons are on the page. Hide the inapproperiate button
+  {{if rsvp_type=="":}}
+    $("#rsvp_cancel_btn").hide();
+  {{elif rsvp_type==True:}} // Yes
+    $("#rsvp_yes_btn").hide();
+  {{else:}} // rsvp_type=="Maybe"
+    $("#rsvp_maybe_btn").hide();
+  {{pass}}
+  
+  $('#rsvp_yes_btn').click(
+    function(){
+      var data = {user_id:{{=user_id}}, rsvp_type:"Yes", event_id:{{=events.id}}};
+      var msg = "msg=" + JSON.stringify(data);  
+      $.post('{{=rsvp_change_callback}}', msg, function(jdata) {
+        console.log("back from the callaback - Y");
+        $("#rsvp_yes_btn").hide();
+        $("#rsvp_maybe_btn").show();
+        $("#rsvp_cancel_btn").show();
+      });
+    }
+  );
+  $('#rsvp_maybe_btn').click(
+    function(){
+      var data = {user_id:{{=user_id}}, rsvp_type:"Maybe", event_id:{{=events.id}}};
+      var msg = "msg=" + JSON.stringify(data);  
+      $.post('{{=rsvp_change_callback}}', msg, function(jdata) {
+        console.log("back from the callaback - M");
+        $("#rsvp_yes_btn").show();
+        $("#rsvp_maybe_btn").hide();
+        $("#rsvp_cancel_btn").show();
+      });
+    }
+  );
+  $('#rsvp_cancel_btn').click(
+    function(){
+      var data = { rsvp_id:{{=rsvp_id}} };
+      var msg = "msg=" + JSON.stringify(data);
+      $.post('{{=rsvp_remove_callback}}', msg, function(jdata) {
+        console.log("back from the callaback - N");
+        $("#rsvp_yes_btn").show();
+        $("#rsvp_maybe_btn").show();
+        $("#rsvp_cancel_btn").hide();
+      });
+    }
+  );
+});
+</script>
