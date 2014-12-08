@@ -49,6 +49,23 @@ def view_picture():
 
 
 ###########################################################################################################################################################################################
+#################################################################################   NOTIFICATIONS   #######################################################################################
+###########################################################################################################################################################################################
+    
+    
+def remove_notification_callback():
+  ### Created by Desmond. A ajax callback function that will remove the notification from the database ###
+  v = request.vars.msg or ''
+  if (v != ''):
+    v = json.loads(v)
+    notification_id = v['notification_id']
+    db(db.notifications.id==notification_id).delete()
+    
+    return response.json(dict(errors=""))
+  else:
+    return response.json(dict(errors="failed to delete"))
+    
+###########################################################################################################################################################################################
 #################################################################################   RVSP   ################################################################################################
 ###########################################################################################################################################################################################
 
@@ -354,8 +371,10 @@ def reply_post():
 #form for the search function
 def search():
      return dict(form=FORM(INPUT(_id='keyword',_name='keyword',
-                                 _onkeyup="ajax('eventCallback', ['keyword'], 'target');")),
-                                 target_div=DIV(_id='target'))
+                                 _onkeyup="ajax('eventCallback', ['keyword'], 'target');"),
+                                 _onkeyup="ajax('studentOrgCallback', ['keyword'], 'target2');"),
+                                 target_div=DIV(_id='target'),
+                                 target_div2=DIV(_id='target2'))
 
 
 #function called by search - generates list with links
