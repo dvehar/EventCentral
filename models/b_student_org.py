@@ -11,11 +11,8 @@ db.define_table('student_org',
     Field('meeting_times', 'text', requires=IS_NOT_EMPTY()),
     Field('website', 'string', requires=IS_NOT_EMPTY()),
     Field('email', 'string', requires=IS_NOT_EMPTY()),
-    Field('leaders', 'string', requires=IS_NOT_EMPTY()),
-    Field('picture', 'upload', requires=IS_NOT_EMPTY()),
     )
 
 db.student_org.join_date.writable = db.student_org.join_date.readable = False
-#Added this line to ensure name doesnt already exist in db.
-db.student_org.name.requires = IS_NOT_IN_DB(db, db.student_org.name)
+db.student_org.name.requires = IS_NOT_IN_DB(db, db.student_org.name)          #Added this line to ensure name doesnt already exist in db.
 db.student_org.id.readable = False
