@@ -1,0 +1,23 @@
+{{extend 'layout.html'}}
+<style type="text/css">
+textarea {	
+	width: 500px;
+}
+button {
+	margin-left: 118px;
+}
+</style>
+
+<script type="text/javascript">
+function index()
+{
+	window.location = "{{=URL('index')}}";
+}
+</script>
+
+<!--Here a form is presented to the user which allows them to create
+a new picture by entering fields.-->
+
+<h2>Add a new picture</h2>
+{{=form}}
+{{=BUTTON('Cancel', _onclick="index()")}}

@@ -1,0 +1,75 @@
+{{extend 'layout.html'}}
+
+<style>
+    div.boxed{
+        margin:5px;
+        padding:5px;
+        padding-bottom:15px;
+        padding-left:15px;
+        border-width:5px;
+        border-style:solid;
+        height:auto;
+        width:auto;
+    }
+    div.comment{
+        margin:5px;
+        padding:15px;
+        border-width:2px;
+        border-style: dashed;
+        height:auto;
+        width:auto;
+    }
+</style>
+
+<img src="{{=URL('download', args=pic.image)}}" />
+<br>
+{{event = db.events(pic.id_of_picture_owner)}}
+{{admin = False}}
+{{if auth.user:}}
+    {{student = db(db.student.student_name == auth.user.id).select().first()}}
+    {{if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == student) ).select() :}}
+            {{admin = True}}
+    {{pass}}
+{{pass}}
+<br><br>
+<!--
+    Comments section
+-->
+<div class = "boxed">
+{{if db( (db.pic_comments.picid == pic.id) & (db.pic_comments.comment_type == 0) ).select():}}
+    <h3>
+    Comments:
+    </h3>
+    {{
+    comments = db((db.pic_comments.picid == pic.id) & (db.pic_comments.comment_type == 0)).select(orderby = ~db.pic_comments.creation_time)
+    }}
+
+    {{for comment in comments:}}
+        <div class = "comment">
+        By:<i>{{=comment.poster_id.student_name.first_name}}</i><br>
+        {{=comment.contents}}
+
+            {{if db( (db.comment_replies.comment_id == comment.id)&(db.comment_replies.comment_type ==1) ).select():}}
+                {{replies = db((db.comment_replies.comment_id == comment.id)&(db.comment_replies.comment_type ==1)).select(orderby = ~db.comment_replies.creation_time)}}
+                {{for reply in replies:}}
+                    <div class = "comment">
+                    By:<i>{{=reply.poster_id.student_name.first_name}}</i><br>
+                    {{=reply.contents}}
+                    </div>
+                {{pass}}
+            {{pass}}
+
+        <br><br>{{=A('Reply', _href=URL('default', 'reply_post',args=[event.id,comment.id,1,pic.id]))}}
+        {{if admin is True:}}
+           &emsp;&emsp;{{=A('Delete post', _href = URL('default','delete_post', args=[event.id, comment.id]))}}
+        {{pass}}
+        </div>
+    {{pass}}
+{{pass}}
+{{if auth.user:}}
+    {{=A('Make a post', _class = 'btn', _href=URL('default', 'pic_post', args=[pic.id, auth.user_id, 0]))}}
+{{pass}}
+</div>
+<br>
+
+{{=A('Return', _class = 'btn', _href=URL('default', 'view_event', args=[event.id]) )}}

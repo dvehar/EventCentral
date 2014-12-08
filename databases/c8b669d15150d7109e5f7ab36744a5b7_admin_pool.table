@@ -54,11 +54,10 @@ p18
 sg9
 I00
 sg10
-S'id'
-p19
+g16
 ssS'title'
-p20
-(dp21
+p19
+(dp20
 g4
 I512
 sg5
@@ -67,10 +66,10 @@ sg6
 I4
 sg7
 S'CHAR(512)'
-p22
+p21
 sg9
 I00
 sg10
 S'string'
-p23
+p22
 ss.

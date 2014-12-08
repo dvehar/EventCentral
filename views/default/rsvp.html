@@ -1,41 +1,44 @@
 {{extend 'layout.html'}}
 <!-- Created by Desmond -->
-
+<!-- Note: db.events.id is used a way to uniquely identify the table rows -->
+<!-- Note: begin_time is used for sorting the time column -->
+{{from operator import itemgetter}}
+{{import time}}
 <p>{{=A('Find More Events', _class='btn', _href=URL('default', 'search'))}}</p> 
+{{rows_in_an_ary_py = []}}
 {{if len(rows) == 0:}}
   {{=(H3("You have no events"))}}
 {{else:}}
   {{=(H3("Here are the events you have RSVP'd to"))}}
+  <!-- the column we sort by is underlined (assending) or overlined (descending) -->
   {{tmp = [TR(
-    TH(A("Event Name",  _class='btn', href=URL('default', 'rsvp'))),
-    TH(A("Host Org",  _class='btn', href=URL('default', 'rsvp'))),
-    TH(A("Time",  _class='btn', href=URL('default', 'rsvp'), _style='text-decoration: underline')),
-    TH(A("Location",  _class='btn', href=URL('default', 'rsvp'))),
-    TH(A("RSVP",  _class='btn', href=URL('default', 'rsvp'))))] }}
+            TH(A("Event Name", _id="EventNameColumn", _name="EventNameColumn", _class='btn')),
+            TH(A("Host Org", _id="HostOrgColumn", _class='btn')),
+            TH(A("Time", _id="TimeColumn", _class='btn')),
+            TH(A("Location", _id="LocationColumn", _class='btn')),
+            TH(A("RSVP", _id="RSVPColumn", _class='btn')), _id="header_row")
+          ]
+    }}
   {{for row in rows:}}
     <!-- Python to determin how to show the time. Basically we don't want to list unessary info such as year or end date if it isn't needed -->
     {{time_str = ""}}
-    <!-- TODO confirm times are displayed correctly -->
+    
     {{put_year_start = False}}
     {{put_year_end = False}}
     {{put_month_start = False}}
     {{put_month_end = False}}
     {{put_day_start = True}}
     {{put_day_end = True}}
+    
     {{start_time_hour = row.events.start_time.hour - (12 if (row.events.start_time.hour > 12) else 0) }}
     {{start_time_hour = 12 if (start_time_hour == 0) else start_time_hour}}
     {{end_time_hour = row.events.end_time.hour - (12 if (row.events.end_time.hour > 12) else 0) }}
     {{end_time_hour = 12 if (end_time_hour == 0) else end_time_hour}}
-    <!--{{print "()()"}}-->
-    <!--{{print row.events.start_time.hour}}-->
-    <!--{{print start_time_hour}}-->
-    <!--{{print row.events.end_time.hour}}-->
-    <!--{{print end_time_hour}}-->
-    <!--{{print "()()"}}-->
-
+    
     {{if (row.events.start_time.year != datetime.now().year):}}
       {{put_year_start = True}}
     {{pass}}
+    
     {{if (row.events.start_time.year != row.events.end_time.year):}}
       {{put_year_start = True}}
       {{put_year_end = True}}
@@ -45,25 +48,180 @@
       {{put_month_end = True}}
       {{put_day_end = True}}
     {{pass}}
+    
     {{time_str += str(row.events.start_time.month) + "/" + str(row.events.start_time.day)}}
+    
     {{if (put_year_start):}}
       {{time_str += "/" + str(row.events.start_time.year)}}
     {{pass}}
+    
     {{time_str += " " + str(start_time_hour) + ":" + str(row.events.start_time.minute).zfill(2) + ("PM" if row.events.start_time.hour >= 12 else "AM") + " - "}}
+    
     {{if (put_month_end):}}
       {{time_str += str(row.events.end_time.month) + "/" + str(row.events.end_time.day)}}
       {{if (put_year_end):}}
         {{time_str += "/" + str(row.events.end_time.year)}}
       {{pass}}
     {{pass}}
+    
     {{time_str += " " + str(end_time_hour) + ":" + str(row.events.end_time.minute).zfill(2) + ("PM" if row.events.end_time.hour >= 12 else "AM")}}
-
+    
+    <!--create table row. it is identified via the db.event.id feild-->
     {{tmp.append(TR(
-                  TD(A(row.events.name,_href=URL('default', 'event', args=[row.events.id]))), 
-                  TD(A(row.student_org.name,_href=URL('default', 'rsvp', args=[row.student_org.id]))), # TODO put the correct page for viewing rsvps
+                  TD(A(row.events.name,_href=URL('default', 'view_event', args=[row.events.id]))), 
+                  TD(A(row.student_org.name,_href=URL('default', 'rsvp', args=[row.student_org.id]))), # TODO put the correct page for viewing student org profiles
                   TD(time_str),
                   TD(row.events.place),
-                  TD('Yes') if (row.rsvp.rsvp_yes_or_maybe) else TD('Maybe')))}}
+                  TD('Yes') if (row.rsvp.rsvp_yes_or_maybe) else TD('Maybe'), _id=str(row.events.id)))}}
+    
+    <!--create entry in the array for quick access later. note no end time is being tracked-->
+    {{rows_in_an_ary_py.append([row.events.name, row.student_org.name, time.mktime(row.events.start_time.timetuple()), row.events.place, 'Y' if (row.rsvp.rsvp_yes_or_maybe) else 'M', row.events.id])}}
   {{pass}}
-  {{=TABLE(tmp)}}
+  
+  {{=TABLE(tmp, _id="tableid")}}
 {{pass}}
+
+
+<!-- JavaScript/Jquery that handles the sorting on columns-->
+<script>
+
+// used for sorting the rows
+var column_index_to_sort_on = 0;
+var sort_columns_assending = true;
+function compareOnColumn(a, b) {
+  if (a[column_index_to_sort_on] === b[column_index_to_sort_on]) {
+    return 0;
+  } else if (sort_columns_assending) {
+    return ( a[column_index_to_sort_on] < b[column_index_to_sort_on] ) ? -1 : 1;
+  } else {
+    return ( a[column_index_to_sort_on] > b[column_index_to_sort_on] ) ? -1 : 1;
+  }
+}
+
+
+$(document).ready(function() {
+  var rows_in_an_ary_js = [];
+  
+  //load the js array we are using for sort via the py version.
+  {{for x in rows_in_an_ary_py:}}
+    tmp=[];
+    tmp.push('{{=x[0]}}'); // event name
+    tmp.push('{{=x[1]}}'); // host org
+    tmp.push({{=x[2]}}); // start time
+    tmp.push('{{=x[3]}}'); // location
+    tmp.push('{{=x[4]}}'); // rsvp
+    tmp.push({{=x[5]}}); // db.events.id
+    rows_in_an_ary_js.push(tmp);
+  {{pass}}
+  
+  // these vars keep track of the state of the buttons
+  var sorting_on_column = "TimeColumn";
+  var sort_accsending = "True";
+  jQuery("#"+sorting_on_column).css('text-decoration','underline');// setup the initial state
+  
+  // this function processes the result from the ajax callback by
+  // updating the state and running the jQuery given in the response.
+  function column_sorting_response_handler(jdata) {
+    var data = JSON.parse(jdata);
+    var val_cmd = data["cmd"]; // the cmd to execute that will change the button apperance
+    if (val_cmd != "") {
+      var val_sorting_on_column = data["sorting_on_column"];
+      var val_sort_accsending = data["sort_accsending"];
+      //console.log("-R-" + val_cmd);
+      //console.log("-R-" + val_sorting_on_column);
+      //console.log("-R-" + val_sort_accsending);
+      
+      eval(val_cmd); // execute cmd to update buttons
+      
+      //// update rows
+      var tablebody = $('#tableid > tbody');
+      var tablerows = $('#tableid > tbody > tr');
+      if ( (val_sorting_on_column === sorting_on_column) && !(sort_accsending === val_sort_accsending) ) {
+        //// if same column is selected toggle the ordering (go through the rows and just prepend)
+        // code inspired from http://stackoverflow.com/questions/16718022/best-way-to-reverse-parent-tr-ordering-stack-in-a-table-via-jquery
+        tablerows.each(function (index) {
+          //console.log( index + ": " + $(this).text());
+          if (index != 0) {
+            tablebody.prepend($(this));
+          }
+        });
+        tablebody.prepend($('#header_row')); // force the header back
+      } else {
+        //// we need to resort the rows based on the selected column
+        // should we sort assending?
+        sort_columns_assending = (val_sort_accsending==="True");
+        // sort on the proper column
+        if (val_sorting_on_column==="EventNameColumn") {
+          column_index_to_sort_on=0;
+        } else if (val_sorting_on_column==="HostOrgColumn") {
+          column_index_to_sort_on=1;
+        } else if (val_sorting_on_column==="TimeColumn") {
+          column_index_to_sort_on=2;
+        } else if (val_sorting_on_column==="LocationColumn") {
+          column_index_to_sort_on=3;
+        } else if (val_sorting_on_column==="RSVPColumn") {
+          column_index_to_sort_on=4;
+        }
+        // sort in place
+        rows_in_an_ary_js.sort(compareOnColumn);
+        //console.log(rows_in_an_ary_js);
+        
+        // update the table
+        for (i=0; i < rows_in_an_ary_js.length; ++i) {
+          tablebody.append($('#' + rows_in_an_ary_js[i][5])); // idx 5 holds the id that is used for the row elemtents
+        }
+      }
+      // update state vars
+      sorting_on_column = val_sorting_on_column;
+      sort_accsending = val_sort_accsending;
+    }
+  }
+  
+  //// below are the column button callbacks. they use ajax to update the button state. this could be done client side...
+  $('#EventNameColumn').click(
+    function(){
+      var data = {sorting_on_column:sorting_on_column, sort_accsending:sort_accsending, selected:"EventNameColumn"};
+      var msg = "msg=" + JSON.stringify(data);  
+      $.post('{{=column_sorting_ajax_url}}', msg, function(jdata) {
+        column_sorting_response_handler(jdata);
+      });
+    }
+  );
+  $('#HostOrgColumn').click(
+    function(){
+      var data = {sorting_on_column:sorting_on_column, sort_accsending:sort_accsending, selected:"HostOrgColumn"};
+      var msg = "msg=" + JSON.stringify(data);  
+      $.post('{{=column_sorting_ajax_url}}', msg, function(jdata) {
+        column_sorting_response_handler(jdata);
+      });
+    }
+  );
+  $('#TimeColumn').click(
+    function(){
+      var data = {sorting_on_column:sorting_on_column, sort_accsending:sort_accsending, selected:"TimeColumn"};
+      var msg = "msg=" + JSON.stringify(data);  
+      $.post('{{=column_sorting_ajax_url}}', msg, function(jdata) {
+        column_sorting_response_handler(jdata);
+      });
+    }
+  );
+  $('#LocationColumn').click(
+    function(){
+      var data = {sorting_on_column:sorting_on_column, sort_accsending:sort_accsending, selected:"LocationColumn"};
+      var msg = "msg=" + JSON.stringify(data);  
+      $.post('{{=column_sorting_ajax_url}}', msg, function(jdata) {
+        column_sorting_response_handler(jdata);
+      });
+    }
+  );
+  $('#RSVPColumn').click(
+    function(){
+      var data = {sorting_on_column:sorting_on_column, sort_accsending:sort_accsending, selected:"RSVPColumn"};
+      var msg = "msg=" + JSON.stringify(data);  
+      $.post('{{=column_sorting_ajax_url}}', msg, function(jdata) {
+        column_sorting_response_handler(jdata);
+      });
+    }
+  );
+});
+</script>
