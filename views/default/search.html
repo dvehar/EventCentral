@@ -1,11 +1,8 @@
 {{extend 'layout.html'}}
-[  {{=A('list all ', _href=URL('view_all_events'))}}]<br />
+[  {{=A('list all ', _href=URL('view_all'))}}]<br />
 {{=form}}
-{{if target_div:}}
 <h1>Events</h1>
 <br />{{=target_div}}
-{{pass}}
-{{if target_div2:}}
+<br />
 <h1>Student Organizations</h1>
 <br />{{=target_div2}}
-{{pass}}
