@@ -71,7 +71,7 @@
     <!--create table row. it is identified via the db.event.id feild-->
     {{tmp.append(TR(
                   TD(A(row.events.name,_href=URL('default', 'view_event', args=[row.events.id]))), 
-                  TD(A(row.student_org.name,_href=URL('default', 'rsvp', args=[row.student_org.id]))), # TODO put the correct page for viewing student org profiles
+                  TD(A(row.student_org.name,_href=URL('default', 'view_student_org', args=[row.student_org.id]))), # TODO put the correct page for viewing student org profiles
                   TD(time_str),
                   TD(row.events.place),
                   TD('Yes') if (row.rsvp.rsvp_yes_or_maybe) else TD('Maybe'), _id=str(row.events.id)))}}
