@@ -43,10 +43,12 @@ def view_event():
     return dict(events=this_event, form=form, rsvp_type=rsvp_type, rsvp_id=rsvp_id, user_id=auth.user.id, rsvp_change_callback=rsvp_change_callback, rsvp_remove_callback=rsvp_remove_callback)
 
 
-def view_all_events():
+def view_all():
     events = db(db.events.id >0).select(orderby=db.events.name)
     links = [A(e.name, _href=URL('view_event',args=e.id)) for e in events]
-    return dict(target_div=UL(*links))
+    orgs = db(db.student_org.id >0).select(orderby=db.student_org.name)
+    links2 = [A(o.name, _href=URL('view_student_org', args=o.id)) for o in orgs]
+    return dict(target_div=UL(*links), target_div2=UL(*links2))
 
 
 #shows the picture and its comments
@@ -460,12 +462,12 @@ def eventCallback():
             ### student tags
 
     events = db(query).select(orderby=db.events.name)
-    
+
     if (len(events) == 0):
-      return P("No Events Found")
+        return P("No Events Found")
     else:
-      links = [A(e.name, _href=URL('view_event', args=e.id)) for e in events]
-      return UL(*links)
+        links = [A(e.name, _href=URL('view_event', args=e.id)) for e in events]
+        return UL(*links)
 
 def studentOrgCallback():
     #returns links of student org pages in relation to search input
@@ -501,11 +503,12 @@ def studentOrgCallback():
             ### student tags
 
     orgs = db(query).select(orderby=db.student_org.name)
+
     if (len(orgs) == 0):
-      return P("No Orgs Found")
+        return P("No Orgs Found")
     else:
-      links = [A(o.name, _href=URL('view_student_org', args=o.id)) for o in orgs]
-      return UL(*links)
+        links = [A(o.name, _href=URL('view_student_org', args=o.id)) for o in orgs]
+        return UL(*links)
 
 
 ###########################################################################################################################################################################################
