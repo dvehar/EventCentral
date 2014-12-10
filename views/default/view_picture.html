@@ -46,15 +46,18 @@
 
     {{for comment in comments:}}
         <div class = "comment">
-        By:<i>{{=comment.poster_id.student_name.first_name}}</i><br>
+        By:<i>{{=comment.poster_id.first_name}}</i><br>
         {{=comment.contents}}
 
             {{if db( (db.comment_replies.comment_id == comment.id)&(db.comment_replies.comment_type ==1) ).select():}}
                 {{replies = db((db.comment_replies.comment_id == comment.id)&(db.comment_replies.comment_type ==1)).select(orderby = ~db.comment_replies.creation_time)}}
                 {{for reply in replies:}}
                     <div class = "comment">
-                    By:<i>{{=reply.poster_id.student_name.first_name}}</i><br>
+                    By:<i>{{=reply.poster_id.first_name}}</i><br>
                     {{=reply.contents}}
+                    {{if admin is True:}}
+                       <br>&emsp;&emsp;{{=A('Delete reply', _href = URL('default','delete_reply', args=[reply.id]))}}
+                    {{pass}}
                     </div>
                 {{pass}}
             {{pass}}

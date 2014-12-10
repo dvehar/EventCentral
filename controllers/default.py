@@ -396,7 +396,6 @@ def delete_pic_post():
     redirect(URL('view_picture', args=(request.args(0)) ))
     return dict()
 
-
 @auth.requires_login()
 def reply_post():
     db.comment_replies.creation_time.default = request.now
@@ -411,7 +410,22 @@ def reply_post():
             redirect(URL('view_picture', args=(request.args(3))))
     return dict(form = form)
 
-
+@auth.requires_login()
+def delete_reply():
+    reply = db.comment_replies(request.args(0))
+    if (reply.comment_type==0):
+        base = db.comments(reply.comment_id)
+        if is_admin(base.event_id):
+            db(db.comment_replies.id == reply.id).delete()
+        redirect(URL('view_event', args = base.event_id))
+    if (reply.comment_type==1):
+        base = db.pic_comments(reply.comment_id)
+        picture = base.picid
+        if (picture.picture_owner_is_student_org == False) & is_admin(picture.id_of_picture_owner):
+            db(db.comment_replies.id == reply.id).delete()
+        redirect(URL('view_picture', args = base.picid))
+    session.flash = "Invalid request"
+    redirect(URL('index'))
 ###########################################################################################################################################################################################
 #################################################################################   SEARCH   ##############################################################################################
 ###########################################################################################################################################################################################
