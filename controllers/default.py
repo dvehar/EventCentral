@@ -83,37 +83,6 @@ def remove_notification_callback():
 ###########################################################################################################################################################################################
 
 
-#RSVPs a user to an event
-@auth.requires_login()
-def RSVP_action():
-    studnt = db.student(request.args(1))
-    if (studnt.student_name.id == auth.user.id):
-        db.rsvp.insert(event_id = request.args(0),
-                       student_id =  request.args(1),
-                       rsvp_yes_or_maybe = request.args(2))
-    redirect(URL('default', 'view_event', args = [request.args(0)]) )
-    return dict()
-
-
-#alters an RSVP from yes to maybe or vice versa
-@auth.requires_login()
-def RSVP_change():
-    student = db.rsvp(request.args(0)).student_id
-    if (student.student_name.id == auth.user.id):
-        db(db.rsvp.id == request.args(0)).update(rsvp_yes_or_maybe = request.args(1))
-    redirect(URL('view_event', args=[request.args(2)] ))
-    return dict()
-
-
-#removes an RSVP from the database
-@auth.requires_login()
-def unRSVP_action():
-    student = db.rsvp(request.args(0)).student_id
-    if (student.student_name.id == auth.user.id):
-        db(db.rsvp.id == request.args(0)).delete()
-    redirect(URL('view_event', args=[request.args(1)] ))
-    return dict()
-
 def un_rsvp_action_callback():
   ### rsvp no: delete the rsvp entry - Desmond ###
   v = request.vars.msg or ''
