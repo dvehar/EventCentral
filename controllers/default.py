@@ -31,7 +31,7 @@ def view_event():
     this_event = db.events(request.args(0, cast=int)) or redirect(URL('index'))
     form = SQLFORM(db.events).process()
     # todo query for stuff
-    rsvp_row = db( (db.student.student_name == auth.user.id) & (auth.user.id == db.student.student_name) & (db.rsvp.student_id == auth.user.id) & (db.rsvp.event_id == request.args(0, cast=int)) ).select(db.rsvp.ALL).first()
+    rsvp_row = db( (db.rsvp.student_id == auth.user.id) & (db.rsvp.event_id == request.args(0, cast=int)) ).select(db.rsvp.ALL).first()
     if (rsvp_row == None):
       rsvp_type = ''
       rsvp_id = -1
@@ -124,7 +124,7 @@ def rsvp_action_callback():
     if (rsvp_type == "Yes" or rsvp_type == "Maybe"):
       print "77   " + str(auth.user)
       # try to fetch the event rsvp. query where student is in auth table and rsvp table. and the event id matches the rsvp event id.
-      current_rsvp = db( (db.student.student_name == user_id) & (auth.user.id == db.student.student_name) & (db.rsvp.student_id == user_id) & (db.rsvp.event_id == event_id) ).select(db.rsvp.ALL)
+      current_rsvp = db( (auth.user.id == user_id) & (db.rsvp.student_id == user_id) & (db.rsvp.event_id == event_id) ).select(db.rsvp.ALL)
       if (len(current_rsvp) == 0):
         # create a new rsvp
         db.rsvp.insert(event_id=event_id, student_id=user_id, rsvp_yes_or_maybe=(rsvp_type == "Yes"))
@@ -141,7 +141,7 @@ def rsvp_action_callback():
 @auth.requires_login()
 def rsvp():
   ### Created by Desmond. Query and return all the events the user is RSVP'd yes or maybe to ###
-  rows = db((db.student.student_name == auth.user.id) & (db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id) & (db.student_org.id == db.events.student_org_id)).select(orderby=db.events.start_time|db.rsvp.rsvp_yes_or_maybe)
+  rows = db( (db.rsvp.student_id==auth.user.id) & (db.rsvp.event_id == db.events.id) & (db.student_org.id == db.events.student_org_id)).select(orderby=db.events.start_time|db.rsvp.rsvp_yes_or_maybe)
   #print rows
   column_sorting_ajax_url = URL('update_rsvp_column_sort')
   return dict(user_id=auth.user.id, rows=rows, column_sorting_ajax_url=column_sorting_ajax_url)
@@ -200,7 +200,7 @@ def update_rsvp_column_sort():
 def org_admin():
   ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
   # get info for the org id (in request) for which you are a leader. if we can't then flash and return home
-  curr_org_info = db((request.args(0) == db.admin_pool.student_org_id) & (request.args(0) == db.student_org.id) & (auth.user.id == db.student.student_name) & (db.admin_pool.student_id == auth.user.id)).select()
+  curr_org_info = db((request.args(0) == db.admin_pool.student_org_id) & (request.args(0) == db.student_org.id) & (db.admin_pool.student_id == auth.user.id)).select()
   if (len(curr_org_info) == 0):
     session.flash = "Invalid request"
     redirect(URL('default','index'))
@@ -208,7 +208,7 @@ def org_admin():
   curr_org_info = curr_org_info[0]['student_org']
   curr_id = request.args(0)
   org_acronyms_ids=[]#[(row['student_org'].acronym,row['student_org'].id)]
-  rows = db((db.admin_pool.student_id == db.student.student_name == auth.user.id) & (db.admin_pool.student_org_id == db.student_org.id)).select(db.student_org.acronym,db.student_org.id,orderby=db.student_org.acronym)
+  rows = db( (db.admin_pool.student_id == auth.user.id) & (db.admin_pool.student_org_id == db.student_org.id)).select(db.student_org.acronym,db.student_org.id,orderby=db.student_org.acronym)
   for idx in range(len(rows)):
     print idx
     org_acronyms_ids.append((rows[idx]['acronym'],rows[idx]['id']))
@@ -219,8 +219,7 @@ def org_admin():
 @auth.requires_login()
 def is_admin(event_id):
     event = db.events(event_id)
-    student = db(db.student.student_name == auth.user.id).select().first()
-    if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == student) ).select():
+    if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == auth.user.id) ).select():
         return True
     else:
         return False
@@ -229,8 +228,7 @@ def is_admin(event_id):
 @auth.requires_login()
 def is_student_org_admin(student_org_id):
     student_orgs = db.student_org(student_org_id)
-    student = db(db.student.student_name == auth.user.id).select().first()
-    if db( (db.admin_pool.student_org_id == student_orgs.id) & (db.admin_pool.student_id == student) ).select():
+    if db( (db.admin_pool.student_org_id == student_orgs.id) & (db.admin_pool.student_id == auth.user.id) ).select():
         return True
     else:
         return False
@@ -467,8 +465,6 @@ def eventCallback():
                 for s in soquery:
                     query = query | (db.events.student_org_id == s.student_org_id)
 
-            ### student tags
-
     events = db(query).select(orderby=db.events.name)
 
     if (len(events) == 0):
@@ -507,8 +503,6 @@ def studentOrgCallback():
             if squery:
                 for s in squery:
                     query = query | (db.student_org.id == s.student_org_id)        #get all student_orgs that match student_org_tag
-
-            ### student tags
 
     orgs = db(query).select(orderby=db.student_org.name)
 

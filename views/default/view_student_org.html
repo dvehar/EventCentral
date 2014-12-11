@@ -34,7 +34,7 @@ function index()
 <h4>Leaders:</h4>
 {{rows = db(db.student_org.id==db.admin_pool.student_org_id).select()}}
     {{for row in rows:}}
-        <p>{{=row.admin_pool.title}} : {{=row.admin_pool.student_id.student_name.first_name}} {{=row.admin_pool.student_id.student_name.last_name}}</p>
+        <p>{{=row.admin_pool.title}} : {{=row.admin_pool.student_id.first_name}} {{=row.admin_pool.student_id.last_name}}</p>
     {{pass}}
 <br>
 

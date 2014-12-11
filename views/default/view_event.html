@@ -132,8 +132,7 @@ Places neither if the user is not logged in
         <h3>
             RSVP status:
         </h3>
-        {{student = db(db.student.student_name == auth.user.id).select().first()}}
-        {{if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == student) ).select() :}}
+        {{if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == auth.user.id) ).select() :}}
             {{admin = True}}
         {{pass}}
         <span id="rsvp_status"></span>
@@ -220,7 +219,11 @@ Places neither if the user is not logged in
     {{if db(db.event_tags.event_id == event.id).select():}}
         {{tags = db(db.event_tags.event_id == event.id).select()}}
         {{for tag in tags:}}
-            {{=tag.tag_id.name}} &nbsp&nbsp{{=A('Remove tag', _href=URL('default','delete_event_tag', args = [tag.id]))}}<br>
+            {{=tag.tag_id.name}} &nbsp&nbsp
+            {{if admin is True:}}
+                {{=A('Remove tag', _href=URL('default','delete_event_tag', args = [tag.id]))}}
+            {{pass}}
+            <br>
         {{pass}}
         <span id = "added_tags"></span>
     {{else:}}

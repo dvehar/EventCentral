@@ -34,7 +34,7 @@ response.menu.append((T('Search'), False, URL('default', 'search')))
 notification_items = []
 if (auth.user): # must be logged in
   # query that ensures the logged in user is in the student table and then grabs all the info from the notifications table related to that student.
-  active_notifications = db( (db.student.student_name == auth.user.id) & (db.notifications.user_to_notify==auth.user.id) ).select(db.notifications.ALL, orderby=~db.notifications.time_created)
+  active_notifications = db( (db.notifications.user_to_notify==auth.user.id) ).select(db.notifications.ALL, orderby=~db.notifications.time_created)
   # construct the list items from the query
   for row in active_notifications:
     callback_str = "var data = {notification_id:" + str(row.id) + "}; var msg = \"msg=\" + JSON.stringify(data); $.post(\"" + str(URL('remove_notification_callback')) + "\", msg, function(jdata) { console.log(\"Im in the callback response recieved function\"); });"

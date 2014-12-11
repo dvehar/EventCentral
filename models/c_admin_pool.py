@@ -2,7 +2,7 @@
 
 db.define_table('admin_pool',
                 Field('student_org_id', 'reference student_org'),
-                Field('student_id', 'reference student'),
+                Field('student_id', 'reference auth_user'),
                 Field('title', 'string') # the title the member has
                 )
 

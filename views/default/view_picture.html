@@ -26,8 +26,7 @@
 {{event = db.events(pic.id_of_picture_owner)}}
 {{admin = False}}
 {{if auth.user:}}
-    {{student = db(db.student.student_name == auth.user.id).select().first()}}
-    {{if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == student) ).select() :}}
+    {{if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == auth.user.id) ).select() :}}
             {{admin = True}}
     {{pass}}
 {{pass}}
