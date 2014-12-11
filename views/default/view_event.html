@@ -1,28 +1,4 @@
 {{extend 'layout.html'}}
-<h1>{{=events.name}}</h1>
-<h3>
-    hosted by:
-    <h4><p>{{=events.student_org_id.name}} ({{=events.student_org_id.acronym}})</p></h4>
-</h3>
-<h3>
-    Description:
-    <h4><p>{{=events.description}}</p></h4>
-</h3>
-<h3>
-    Location:
-    <h4><p>{{=events.place}}</p></h4>
-</h3>
-<h3>
-    Time:
-    <h4><p>Starts: <i>{{=events.start_time}}</i> Ends: <i>{{=events.end_time}}</i></p></h4>
-</h3>
-
-<h3>
-    Update RSVP:
-    {{=A('Yes', _class='btn', _id="rsvp_yes_btn")}}
-    {{=A('Maybe', _class='btn', _id="rsvp_maybe_btn")}}
-    {{=A('No', _class='btn', _id="rsvp_cancel_btn")}} 
-</h3>
 
 {{=A('View Student Org', _class='btn', _href=URL('view_student_org', args=[events.student_org_id]))}}
 
@@ -74,5 +50,201 @@ $(document).ready(function() {
       });
     }
   );
+  $('#add_tag_form').submit(function(event){
+      event.preventDefault();
+      var tex = $("#add_tag_name").val();
+      var data = { tag:tex,event_id:{{=events.id}} };
+      var msg = "msg=" + JSON.stringify(data);
+      $.post("{{=URL('default','event_add_tag')}}", msg, function(jdata){
+          $("#added_tags").append(tex + "<br>");
+          $("#add_tag_name").val("");
+          $("#tag_confirm").html("tag added!").fadeOut(1000)
+      });
+  });
 });
 </script>
+{{event = events}}
+<style>
+    div.boxed{
+        margin:5px;
+        padding:5px;
+        padding-bottom:15px;
+        padding-left:15px;
+        border-width:5px;
+        border-style:solid;
+        height:auto;
+        width:auto;
+    }
+    div.comment{
+        margin:5px;
+        padding:15px;
+        border-width:2px;
+        border-style: dashed;
+        height:auto;
+        width:auto;
+    }
+</style>
+<h1 style = "text-align:center;">
+{{=event.name}}
+</h1>
+<div class="boxed">
+<h3>
+    Hosted by:
+</h3>
+{{=A(event.student_org_id.name, _href=URL('default', 'view_student_org', args=[event.student_org_id]))}}
+</div>
+
+<div class = "boxed">
+<h3>
+    Where:
+</h3>
+{{=event.place}}
+</div>
+
+<div class="boxed">
+
+<h3>
+    When:
+</h3>
+<table>
+<tr><td>From:</td> <td><span style = "font-size:20px">{{=event.start_time}}</span></td></tr>
+<tr><td>To:</td><td>  <span style = "font-size:20px">{{=event.end_time}}</span></td></tr>
+</table>
+</div>
+<div class = "boxed">
+<h3>
+    Description:
+</h3>
+{{=event.description}}
+</div>
+<!--
+Places an RSVP/unRSVP button if the user is not RSVPed or RSVPed
+Places an Edit event button if user is an admin
+Places neither if the user is not logged in
+-->
+{{admin = False}}
+{{if auth.user:}}
+        <div class = "boxed">
+        <h3>
+            RSVP status:
+        </h3>
+        {{student = db(db.student.student_name == auth.user.id).select().first()}}
+        {{if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == student) ).select() :}}
+            {{admin = True}}
+        {{pass}}
+
+        {{if db((db.rsvp.event_id == event.id) and (db.rsvp.student_id == auth.user.id)).select() :}}
+            {{user_rsvp = db(db.rsvp.event_id == event.id and db.rsvp.student_id == auth.user.id).select().first()}}
+            {{if user_rsvp.rsvp_yes_or_maybe is True:}}
+                Yes<br><br>
+            {{else:}}
+                Maybe<br><br>
+            {{pass}}
+        {{else:}}
+            Not RSVPed<br><br>
+        {{pass}}
+        <h3>
+            Update RSVP to:
+            {{=A('Yes', _class='btn', _id="rsvp_yes_btn")}}
+            {{=A('Maybe', _class='btn', _id="rsvp_maybe_btn")}}
+            {{=A('No', _class='btn', _id="rsvp_cancel_btn")}} 
+        </h3>
+        </div>
+{{pass}}
+<!--
+    Comments section
+-->
+<div class = "boxed">
+<h3>
+    Comments:
+</h3>
+{{if db((db.comments.event_id == event.id)& (db.comments.comment_type == 0)).select():}}
+    {{
+    comments = db( (db.comments.event_id ==  event.id) & (db.comments.comment_type == 0)).select(orderby = ~db.comments.creation_time)
+    }}
+    {{for comment in comments:}}
+        <div class = "comment">
+        By:<i>{{=comment.poster_id.first_name}}</i><br>
+        {{=comment.contents}}
+
+            {{if db((db.comment_replies.comment_id == comment.id)&(db.comment_replies.comment_type ==0) ).select():}}
+                {{replies = db((db.comment_replies.comment_id == comment.id)&(db.comment_replies.comment_type ==0)).select(orderby = ~db.comment_replies.creation_time)}}
+                {{for reply in replies:}}
+                    <div class = "comment">
+                    By:<i>{{=reply.poster_id.first_name}}</i><br>
+                    {{=reply.contents}}
+                     {{if admin is True:}}
+                        <br>&emsp;&emsp;{{=A('Delete reply', _href = URL('default','delete_reply', args=[reply.id]))}}
+                     {{pass}}
+                    </div>
+                {{pass}}
+            {{pass}}
+
+        <br><br>{{=A('Reply', _href=URL('default', 'reply_post',args=[event.id,comment.id,0]))}}
+        {{if admin is True:}}
+           &emsp;&emsp;{{=A('Delete post', _href = URL('default','delete_post', args=[event.id, comment.id]))}}
+        {{pass}}
+        </div>
+        {{pass}}
+    {{else:}}
+        Be the first to comment!<br>
+    {{pass}}
+    
+    {{if auth.user:}}
+        {{=A('Make a post', _class = 'btn', _href=URL('default', 'event_post', args=[event.id, auth.user_id, 0]))}}
+    {{pass}}
+</div>
+
+<!--
+    Picture Section
+-->
+
+<div class = "boxed">
+<h3>
+   Pictures (Click to view and comment)
+</h3>
+    {{if db((db.picture.picture_owner_is_student_org == False) &
+                 (db.picture.id_of_picture_owner == event.id)).select():}}
+
+        {{pics = db( (db.picture.picture_owner_is_student_org == False) &
+                     (db.picture.id_of_picture_owner == event.id) ).select()}}
+        {{for pic in pics:}}
+            <a href="{{=URL('default', 'view_picture', args=[pic.id])}}"><img src="{{=URL('download', args=pic.image)}}" style = "width:200px;height:200px" /></a>
+
+        {{pass}}
+    {{pass}}
+{{if admin is True:}}
+    {{=A('Edit pictures', _class = 'btn', _href=URL('default', 'edit_event_pictures', args=[event.id]))}}
+{{pass}}
+<br>
+</div>
+
+<div class = "boxed">
+    <h3>
+        Tags
+    </h3>
+    {{if db(db.event_tags.event_id == event.id).select():}}
+        {{tags = db(db.event_tags.event_id == event.id).select()}}
+        {{for tag in tags:}}
+            {{=tag.tag_id.name}}<br>
+        {{pass}}
+        <span id = "added_tags"></span>
+    {{else:}}
+        No tags have been posted yet!
+    {{pass}}
+    {{if admin is True:}}
+        <br>Add a Tag:<br>
+        <form id = "add_tag_form">
+            <input type="text" id = "add_tag_name"><span id = "tag_confirm"></span>
+            <!--<input type="submit" value="Submit" id = "tag_submit_button">-->
+        </form>
+    {{pass}}
+</div>
+
+    <!--admins can edit pictures and the event-->
+
+{{if admin is True:}}
+    <br><br><br><br>
+    {{=A('Edit event', _class = 'btn', _href = URL('default', 'event_edit', args=[event.id]))}}
+    <div style = "text-align:right;">{{=A('Delete event', _class = 'btn alert', _href=URL('default', 'delete_event', args=[event.id]))}}</div>
+{{pass}}

@@ -6,7 +6,7 @@ db.define_table('comment_replies',
                 Field('comment_type', 'integer'), #0=?(event reply), #1 =(picture reply)
                 Field('contents', 'text'),
                 Field('creation_time', 'datetime'),
-                Field('poster_id', 'reference student'),
+                Field('poster_id', 'reference auth_user'),
                 )
 
 db.comment_replies.comment_id.writable   = db.comment_replies.comment_id.readable = False

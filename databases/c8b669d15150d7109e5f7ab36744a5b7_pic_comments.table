@@ -49,12 +49,12 @@ I00
 sg6
 I6
 sg7
-S'INTEGER REFERENCES student (id) ON DELETE CASCADE'
+S'INTEGER REFERENCES auth_user (id) ON DELETE CASCADE'
 p18
 sg9
 I00
 sg10
-S'reference student'
+S'reference auth_user'
 p19
 ssS'picid'
 p20

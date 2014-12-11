@@ -6,7 +6,7 @@ db.define_table('pic_comments',
                 Field('comment_type', 'integer'), #0=?(normal comment), 1=?(question), 2=?(awnser)
                 Field('contents', 'text'),
                 Field('creation_time', 'datetime'),
-                Field('poster_id', 'reference student'),
+                Field('poster_id', 'reference auth_user'),
                 )
 
 db.pic_comments.picid.writable       = db.pic_comments.picid.readable = False

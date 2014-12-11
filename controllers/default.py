@@ -82,6 +82,24 @@ def remove_notification_callback():
 #################################################################################   RVSP   ################################################################################################
 ###########################################################################################################################################################################################
 
+def event_add_tag():
+    ta = request.vars.msg or ''
+    if (ta != ''):
+        ta = json.loads(ta)
+        tag_name = ta['tag']
+        event_id = ta['event_id']
+        dbtag = db(db.tag.name == tag_name).select(db.tag.ALL)
+        if (len(dbtag) == 0):
+            get_tag = db.tag.insert(name=tag_name)
+            db.event_tags.insert(tag_id = get_tag.id, event_id = event_id)
+        else:
+            get_tag = dbtag[0]
+            dbevent_tags = db((db.event_tags.tag_id == get_tag.id)& (db.event_tags.event_id == event_id)).select(db.event_tags.ALL)
+            if(len(dbevent_tags)==0):
+                db.event_tags.insert(tag_id = get_tag.id, event_id = event_id)
+        return response.json(dict(errors=""))
+    return response.json(dict(errors = "error in event_add_tag"))
+
 
 def un_rsvp_action_callback():
   ### rsvp no: delete the rsvp entry - Desmond ###
@@ -365,7 +383,6 @@ def delete_pic_post():
     redirect(URL('view_picture', args=(request.args(0)) ))
     return dict()
 
-
 @auth.requires_login()
 def reply_post():
     db.comment_replies.creation_time.default = request.now
@@ -380,7 +397,22 @@ def reply_post():
             redirect(URL('view_picture', args=(request.args(3))))
     return dict(form = form)
 
-
+@auth.requires_login()
+def delete_reply():
+    reply = db.comment_replies(request.args(0))
+    if (reply.comment_type==0):
+        base = db.comments(reply.comment_id)
+        if is_admin(base.event_id):
+            db(db.comment_replies.id == reply.id).delete()
+        redirect(URL('view_event', args = base.event_id))
+    if (reply.comment_type==1):
+        base = db.pic_comments(reply.comment_id)
+        picture = base.picid
+        if (picture.picture_owner_is_student_org == False) & is_admin(picture.id_of_picture_owner):
+            db(db.comment_replies.id == reply.id).delete()
+        redirect(URL('view_picture', args = base.picid))
+    session.flash = "Invalid request"
+    redirect(URL('index'))
 ###########################################################################################################################################################################################
 #################################################################################   SEARCH   ##############################################################################################
 ###########################################################################################################################################################################################

@@ -2,7 +2,7 @@
 
 db.define_table('rsvp',
                 Field('event_id', 'reference events'),
-                Field('student_id', 'reference student'),
+                Field('student_id', 'reference auth_user'),
                 Field('rsvp_yes_or_maybe', 'boolean') # true = 'yes', false = 'maybe'
                )
 
