@@ -195,24 +195,30 @@ def update_rsvp_column_sort():
 #################################################################################   ADMIN   ###############################################################################################
 ###########################################################################################################################################################################################
 
+#This is the page where you add a event to a student org.
+@auth.requires_login()
+def add_event_for_org():
+    the_student_org_id = request.args(0)
+    if (not is_student_org_admin(the_student_org_id)):
+      session.flash = T('You are not an admin for this org')
+      redirect(URL('rsvp'))
+      
+    form = SQLFORM(db.events, student_org_id=the_student_org_id)
+    if form.process().accepted:
+        #session.flash displays a message after redirection
+        session.flash = T('New event successfully created!')
+        redirect(URL('index'))
+    return dict(form=form)
 
 @auth.requires_login()
 def org_admin():
   ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
-  # get info for the org id (in request) for which you are a leader. if we can't then flash and return home
-  curr_org_info = db((request.args(0) == db.admin_pool.student_org_id) & (request.args(0) == db.student_org.id) & (db.admin_pool.student_id == auth.user.id)).select()
-  if (len(curr_org_info) == 0):
-    session.flash = "Invalid request"
-    redirect(URL('default','index'))
-  #print "+++" + str(curr_org_info) + "+++" + str(request.args(0))
-  curr_org_info = curr_org_info[0]['student_org']
-  curr_id = request.args(0)
-  org_acronyms_ids=[]#[(row['student_org'].acronym,row['student_org'].id)]
-  rows = db( (db.admin_pool.student_id == auth.user.id) & (db.admin_pool.student_org_id == db.student_org.id)).select(db.student_org.acronym,db.student_org.id,orderby=db.student_org.acronym)
+  org_titles_acronyms_ids=[]#[(row['admin_pool'].title, row['student_org'].acronym,row['student_org'].id)]
+  rows = db( (db.admin_pool.student_id == auth.user.id) & (db.admin_pool.student_org_id == db.student_org.id)).select(db.admin_pool.title, db.student_org.acronym,db.student_org.id,orderby=db.student_org.acronym)
   for idx in range(len(rows)):
-    print idx
-    org_acronyms_ids.append((rows[idx]['acronym'],rows[idx]['id']))
-  return dict(curr_id=curr_id,org_acronyms_ids=org_acronyms_ids,curr_org_info=curr_org_info)
+    print rows[idx]
+    org_titles_acronyms_ids.append((rows[idx]['admin_pool']['title'],rows[idx]['student_org']['acronym'],rows[idx]['student_org']['id']))
+  return dict(org_titles_acronyms_ids=org_titles_acronyms_ids)
 
 
 #checks if a user is an admin of the given event

@@ -29,6 +29,7 @@ response.menu = [
 
 response.menu.append((T('RSVP'), False, URL('default', 'rsvp')))
 response.menu.append((T('Search'), False, URL('default', 'search')))
+response.menu.append((T('Admin'), False, URL('default', 'org_admin')))
 
 # query and check if there are any notifications
 notification_items = []

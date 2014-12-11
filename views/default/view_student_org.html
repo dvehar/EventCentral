@@ -32,9 +32,10 @@ function index()
 <p>{{=student_orgs.email}}</p>
 <br>
 <h4>Leaders:</h4>
-{{rows = db(db.student_org.id==db.admin_pool.student_org_id).select()}}
+{{rows = db( (student_orgs.id==db.admin_pool.student_org_id)).select()}}
     {{for row in rows:}}
-        <p>{{=row.admin_pool.title}} : {{=row.admin_pool.student_id.first_name}} {{=row.admin_pool.student_id.last_name}}</p>
+        {{print row}}
+        <p>{{=row.title}} : {{=row.student_id.first_name}} {{=row.student_id.last_name}}</p>
     {{pass}}
 <br>
 

@@ -1,15 +1,17 @@
 {{extend 'layout.html'}}
 
 <h3>Student Org Managment</h3>
-
-<ul>
-  {{for org_acronym,org_id in org_acronyms_ids:}}
-    {{=LI(A(org_acronym, _class='btn', _href=URL('default', 'org_admin', args=[org_id]), styles=({background-color: yellow} if org_id == curr_id else {})))}}
-  {{pass}}
-</ul>
-
+{{=A('Add Student Org', _class = 'btn',  _href=URL('default', 'add_student_org'))}}
 <table>
-  {{for a,b in zip(curr_org_info.keys(),curr_org_info.values()):}}
-    {{=TR(TH(a),TD(b if (b != "") else "None."))}}
+  {{for title,org_acronym,org_id in org_titles_acronyms_ids:}}
+    <tr>
+      <td>{{=org_acronym}}</td>
+      <td>{{=title}}</td>
+      <td>{{=A('View Student Org', _class='btn', _href=URL('view_student_org', args=[org_id]))}}</td>
+      <td>{{=A('Add Event', _class='btn', _href=URL('add_event_for_org', args=[org_id]))}}</td>
+      <td>{{=A('Edit Student Org', _class = 'btn',  _href=URL('default', 'edit_student_org', args=[org_id]))}}</td>
+      <td>{{=A('Edit Picture', _class = 'btn',  _href=URL('default', 'add_student_org_picture', args=[org_id]))}}</td>
+      <td>{{=A('Delete Student Org', _class = 'btn',  _href=URL('default', 'delete_student_org', args=[org_id]))}}</td>
+    </tr>
   {{pass}}
 </table>
