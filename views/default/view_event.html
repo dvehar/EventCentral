@@ -1,17 +1,16 @@
 {{extend 'layout.html'}}
-
-{{=A('View Student Org', _class='btn', _href=URL('view_student_org', args=[events.student_org_id]))}}
-
-
 <script>
 $(document).ready(function() {
   // all rsvp 3 buttons are on the page. Hide the inapproperiate button
   {{if rsvp_type=="":}}
     $("#rsvp_cancel_btn").hide();
+    $("#rsvp_status").html("not RSVPed");
   {{elif rsvp_type==True:}} // Yes
     $("#rsvp_yes_btn").hide();
+    $("#rsvp_status").html("RSVPed as 'yes'");
   {{else:}} // rsvp_type=="Maybe"
     $("#rsvp_maybe_btn").hide();
+    $("#rsvp_status").html("RSVPed as 'maybe'");
   {{pass}}
   
   $('#rsvp_yes_btn').click(
@@ -23,6 +22,7 @@ $(document).ready(function() {
         $("#rsvp_yes_btn").hide();
         $("#rsvp_maybe_btn").show();
         $("#rsvp_cancel_btn").show();
+        $("#rsvp_status").html("RSVPed as 'Yes'");
       });
     }
   );
@@ -35,6 +35,7 @@ $(document).ready(function() {
         $("#rsvp_yes_btn").show();
         $("#rsvp_maybe_btn").hide();
         $("#rsvp_cancel_btn").show();
+        $("#rsvp_status").html("RSVPed as 'Maybe'");
       });
     }
   );
@@ -47,6 +48,7 @@ $(document).ready(function() {
         $("#rsvp_yes_btn").show();
         $("#rsvp_maybe_btn").show();
         $("#rsvp_cancel_btn").hide();
+        $("#rsvp_status").html("not RSVPed");
       });
     }
   );
@@ -91,7 +93,9 @@ $(document).ready(function() {
 <h3>
     Hosted by:
 </h3>
-{{=A(event.student_org_id.name, _href=URL('default', 'view_student_org', args=[event.student_org_id]))}}
+{{#=A(event.student_org_id.name, _href=URL('default', 'view_student_org', args=[event.student_org_id]))}}
+{{=event.student_org_id.name}}<br>
+{{=A('View Student Org', _class='btn', _href=URL('view_student_org', args=[events.student_org_id]))}}
 </div>
 
 <div class = "boxed">
@@ -132,17 +136,7 @@ Places neither if the user is not logged in
         {{if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == student) ).select() :}}
             {{admin = True}}
         {{pass}}
-
-        {{if db((db.rsvp.event_id == event.id) and (db.rsvp.student_id == auth.user.id)).select() :}}
-            {{user_rsvp = db(db.rsvp.event_id == event.id and db.rsvp.student_id == auth.user.id).select().first()}}
-            {{if user_rsvp.rsvp_yes_or_maybe is True:}}
-                Yes<br><br>
-            {{else:}}
-                Maybe<br><br>
-            {{pass}}
-        {{else:}}
-            Not RSVPed<br><br>
-        {{pass}}
+        <span id="rsvp_status"></span>
         <h3>
             Update RSVP to:
             {{=A('Yes', _class='btn', _id="rsvp_yes_btn")}}
@@ -226,7 +220,7 @@ Places neither if the user is not logged in
     {{if db(db.event_tags.event_id == event.id).select():}}
         {{tags = db(db.event_tags.event_id == event.id).select()}}
         {{for tag in tags:}}
-            {{=tag.tag_id.name}}<br>
+            {{=tag.tag_id.name}} &nbsp&nbsp{{=A('Remove tag', _href=URL('default','delete_event_tag', args = [tag.id]))}}<br>
         {{pass}}
         <span id = "added_tags"></span>
     {{else:}}

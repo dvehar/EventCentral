@@ -347,6 +347,13 @@ def delete_post():
     redirect(URL('view_event', args=(request.args(0)) ))
     return dict()
 
+@auth.requires_login()
+def delete_event_tag():
+    tag = db.event_tags(request.args(0))
+    event_id = tag.event_id
+    if is_admin(tag.event_id):
+        db(db.event_tags.id == tag.id).delete()
+    redirect(URL('view_event', args=[event_id]))
 
 #posts a comment on an event
 @auth.requires_login()
