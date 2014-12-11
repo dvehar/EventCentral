@@ -1,12 +1,5 @@
 {{extend 'layout.html'}}
 
-<h3>
-    Update RSVP:
-    {{=A('Yes', _class='btn', _id="rsvp_yes_btn")}}
-    {{=A('Maybe', _class='btn', _id="rsvp_maybe_btn")}}
-    {{=A('No', _class='btn', _id="rsvp_cancel_btn")}} 
-</h3>
-
 {{=A('View Student Org', _class='btn', _href=URL('view_student_org', args=[events.student_org_id]))}}
 
 
@@ -57,6 +50,17 @@ $(document).ready(function() {
       });
     }
   );
+  $('#add_tag_form').submit(function(event){
+      event.preventDefault();
+      var tex = $("#add_tag_name").val();
+      var data = { tag:tex,event_id:{{=events.id}} };
+      var msg = "msg=" + JSON.stringify(data);
+      $.post("{{=URL('default','event_add_tag')}}", msg, function(jdata){
+          $("#added_tags").append(tex + "<br>");
+          $("#add_tag_name").val("");
+          $("#tag_confirm").html("tag added!").fadeOut(1000)
+      });
+  });
 });
 </script>
 {{event = events}}
@@ -128,23 +132,23 @@ Places neither if the user is not logged in
         {{if db( (db.admin_pool.student_org_id == event.student_org_id) & (db.admin_pool.student_id == student) ).select() :}}
             {{admin = True}}
         {{pass}}
+
         {{if db((db.rsvp.event_id == event.id) and (db.rsvp.student_id == auth.user.id)).select() :}}
             {{user_rsvp = db(db.rsvp.event_id == event.id and db.rsvp.student_id == auth.user.id).select().first()}}
-            <!-- Change from yes to maybe -->
             {{if user_rsvp.rsvp_yes_or_maybe is True:}}
-            Yes<br><br>
-            {{#=A('Change to Maybe', _class = 'btn', _href=URL('default', 'RSVP_change', args=[user_rsvp.id, False, event.id]))}}
+                Yes<br><br>
             {{else:}}
                 Maybe<br><br>
-                {{#=A('Change to Yes', _class = 'btn', _href=URL('default', 'RSVP_change', args=[user_rsvp.id, True, event.id]))}}
             {{pass}}
-            {{#=A('unRSVP', _class = 'btn', _href=URL('default', 'unRSVP_action', args=[user_rsvp.id, event.id]))}}
         {{else:}}
             Not RSVPed<br><br>
-            <!-- did not rsvp yet -->
-            {{#=A('RSVP', _class = 'btn', _href=URL('default', 'RSVP_action', args=[event.id, student.id, True]))}}
-            {{#=A('Maybe', _class = 'btn', _href=URL('default', 'RSVP_action', args=[event.id, student.id, False]) )}}
         {{pass}}
+        <h3>
+            Update RSVP to:
+            {{=A('Yes', _class='btn', _id="rsvp_yes_btn")}}
+            {{=A('Maybe', _class='btn', _id="rsvp_maybe_btn")}}
+            {{=A('No', _class='btn', _id="rsvp_cancel_btn")}} 
+        </h3>
         </div>
 {{pass}}
 <!--
@@ -158,12 +162,11 @@ Places neither if the user is not logged in
     {{
     comments = db( (db.comments.event_id ==  event.id) & (db.comments.comment_type == 0)).select(orderby = ~db.comments.creation_time)
     }}
-
     {{for comment in comments:}}
         <div class = "comment">
         By:<i>{{=comment.poster_id.first_name}}</i><br>
         {{=comment.contents}}
-            
+
             {{if db((db.comment_replies.comment_id == comment.id)&(db.comment_replies.comment_type ==0) ).select():}}
                 {{replies = db((db.comment_replies.comment_id == comment.id)&(db.comment_replies.comment_type ==0)).select(orderby = ~db.comment_replies.creation_time)}}
                 {{for reply in replies:}}
@@ -176,49 +179,72 @@ Places neither if the user is not logged in
                     </div>
                 {{pass}}
             {{pass}}
-            
+
         <br><br>{{=A('Reply', _href=URL('default', 'reply_post',args=[event.id,comment.id,0]))}}
         {{if admin is True:}}
            &emsp;&emsp;{{=A('Delete post', _href = URL('default','delete_post', args=[event.id, comment.id]))}}
         {{pass}}
         </div>
-
+        {{pass}}
+    {{else:}}
+        Be the first to comment!<br>
     {{pass}}
-{{else:}}
-    Be the first to comment!<br>
-{{pass}}
     
-{{if auth.user:}}
-    {{=A('Make a post', _class = 'btn', _href=URL('default', 'event_post', args=[event.id, auth.user_id, 0]))}}
-{{pass}}
+    {{if auth.user:}}
+        {{=A('Make a post', _class = 'btn', _href=URL('default', 'event_post', args=[event.id, auth.user_id, 0]))}}
+    {{pass}}
 </div>
 
 <!--
-    Picture Section (only visible when there is at least 1 picture)
+    Picture Section
 -->
 
-{{if db((db.picture.picture_owner_is_student_org == False) &
+<div class = "boxed">
+<h3>
+   Pictures (Click to view and comment)
+</h3>
+    {{if db((db.picture.picture_owner_is_student_org == False) &
                  (db.picture.id_of_picture_owner == event.id)).select():}}
-    <div class = "boxed">
-    <h3>
-        Pictures (Click to view and comment)
-    </h3>
-    {{pics = db( (db.picture.picture_owner_is_student_org == False) &
-                 (db.picture.id_of_picture_owner == event.id) ).select()}}
-    {{for pic in pics:}}
+
+        {{pics = db( (db.picture.picture_owner_is_student_org == False) &
+                     (db.picture.id_of_picture_owner == event.id) ).select()}}
+        {{for pic in pics:}}
             <a href="{{=URL('default', 'view_picture', args=[pic.id])}}"><img src="{{=URL('download', args=pic.image)}}" style = "width:200px;height:200px" /></a>
 
+        {{pass}}
     {{pass}}
-    </div>
-{{pass}}
-<br>
-    <!--admins can edit pictures-->
 {{if admin is True:}}
     {{=A('Edit pictures', _class = 'btn', _href=URL('default', 'edit_event_pictures', args=[event.id]))}}
+{{pass}}
+<br>
+</div>
 
+<div class = "boxed">
+    <h3>
+        Tags
+    </h3>
+    {{if db(db.event_tags.event_id == event.id).select():}}
+        {{tags = db(db.event_tags.event_id == event.id).select()}}
+        {{for tag in tags:}}
+            {{=tag.tag_id.name}}<br>
+        {{pass}}
+        <span id = "added_tags"></span>
+    {{else:}}
+        No tags have been posted yet!
+    {{pass}}
+    {{if admin is True:}}
+        <br>Add a Tag:<br>
+        <form id = "add_tag_form">
+            <input type="text" id = "add_tag_name"><span id = "tag_confirm"></span>
+            <!--<input type="submit" value="Submit" id = "tag_submit_button">-->
+        </form>
+    {{pass}}
+</div>
+
+    <!--admins can edit pictures and the event-->
+
+{{if admin is True:}}
     <br><br><br><br>
     {{=A('Edit event', _class = 'btn', _href = URL('default', 'event_edit', args=[event.id]))}}
     <div style = "text-align:right;">{{=A('Delete event', _class = 'btn alert', _href=URL('default', 'delete_event', args=[event.id]))}}</div>
-
-
 {{pass}}

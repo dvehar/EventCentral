@@ -82,37 +82,24 @@ def remove_notification_callback():
 #################################################################################   RVSP   ################################################################################################
 ###########################################################################################################################################################################################
 
+def event_add_tag():
+    ta = request.vars.msg or ''
+    if (ta != ''):
+        ta = json.loads(ta)
+        tag_name = ta['tag']
+        event_id = ta['event_id']
+        dbtag = db(db.tag.name == tag_name).select(db.tag.ALL)
+        if (len(dbtag) == 0):
+            get_tag = db.tag.insert(name=tag_name)
+            db.event_tags.insert(tag_id = get_tag.id, event_id = event_id)
+        else:
+            get_tag = dbtag[0]
+            dbevent_tags = db((db.event_tags.tag_id == get_tag.id)& (db.event_tags.event_id == event_id)).select(db.event_tags.ALL)
+            if(len(dbevent_tags)==0):
+                db.event_tags.insert(tag_id = get_tag.id, event_id = event_id)
+        return response.json(dict(errors=""))
+    return response.json(dict(errors = "error in event_add_tag"))
 
-#RSVPs a user to an event
-@auth.requires_login()
-def RSVP_action():
-    studnt = db.student(request.args(1))
-    if (studnt.student_name.id == auth.user.id):
-        db.rsvp.insert(event_id = request.args(0),
-                       student_id =  request.args(1),
-                       rsvp_yes_or_maybe = request.args(2))
-    redirect(URL('default', 'view_event', args = [request.args(0)]) )
-    return dict()
-
-
-#alters an RSVP from yes to maybe or vice versa
-@auth.requires_login()
-def RSVP_change():
-    student = db.rsvp(request.args(0)).student_id
-    if (student.student_name.id == auth.user.id):
-        db(db.rsvp.id == request.args(0)).update(rsvp_yes_or_maybe = request.args(1))
-    redirect(URL('view_event', args=[request.args(2)] ))
-    return dict()
-
-
-#removes an RSVP from the database
-@auth.requires_login()
-def unRSVP_action():
-    student = db.rsvp(request.args(0)).student_id
-    if (student.student_name.id == auth.user.id):
-        db(db.rsvp.id == request.args(0)).delete()
-    redirect(URL('view_event', args=[request.args(1)] ))
-    return dict()
 
 def un_rsvp_action_callback():
   ### rsvp no: delete the rsvp entry - Desmond ###
