@@ -11,32 +11,86 @@ function index()
 {
 	window.location = "{{=URL('index')}}";
 }
+      $(document).ready(function() {
+      $('#add_tag_form').submit(function(org){
+      org.preventDefault();
+      var tex = $("#add_tag_name").val();
+      var data = { tag:tex,student_org_id:{{=student_orgs.id}} };
+      var msg = "msg=" + JSON.stringify(data);
+      $.post("{{=URL('default','student_org_add_tag')}}", msg, function(jdata){
+          $("#added_tags").append(tex + "<br>");
+          $("#add_tag_name").val("");
+          $("#tag_confirm").html("tag added!").fadeOut(1000)
+      });
+  });
+});
 </script>
+
+{{org=student_orgs}}
+
+{{admin = False}}
+
+{{if auth.user:}}
+    {{if db(db.admin_pool.student_org_id == student_orgs.id and db.admin_pool.student_id == auth.user.id).select() :}}
+            {{admin = True}}
+    {{pass}}
 
 <h1>{{=student_orgs.name}} ({{=student_orgs.acronym}})</h1>
 <p class="light">Joined on {{=student_orgs.join_date}}</p>
+<hr>
 <br>
+<div class="well">
 <h4>Description:</h4>
 <p>{{=student_orgs.description}}</p>
-<br>
+</div>
+<div class="well">
 <h4>Meeting Location:</h4>
 <p>{{=student_orgs.meeting_location}}</p>
-<br>
+</div>
+<div class="well">
 <h4>Meeting Times:</h4>
 <p>{{=student_orgs.meeting_times}}</p>
-<br>
+</div>
+<div class="well">
 <h4>Website:</h4>
 <p>{{=student_orgs.website}}</p>
-<br>
+</div>
+<div class="well">
 <h4>Email:</h4>
 <p>{{=student_orgs.email}}</p>
-<br>
+</div>
+<div class="well">
 <h4>Leaders:</h4>
 {{rows = db( (student_orgs.id==db.admin_pool.student_org_id)).select()}}
     {{for row in rows:}}
-        {{print row}}
         <p>{{=row.title}} : {{=row.student_id.first_name}} {{=row.student_id.last_name}}</p>
     {{pass}}
+</div>
+
+<div class = "well">
+    <h4>Tags:</h4>
+    {{if db(db.student_org_tags.student_org_id == org.id).select():}}
+        {{tags = db(db.student_org_tags.student_org_id == org.id).select()}}
+        {{for tag in tags:}}
+            {{=tag.tag_id.name}} &nbsp&nbsp
+            {{if admin is True:}}
+                {{=A('Remove tag', _href=URL('default','delete_student_org_tag', args = [tag.id]))}}
+            {{pass}}
+            <br>
+        {{pass}}
+        <span id = "added_tags"></span>
+    {{else:}}
+        No tags have been posted yet!
+    {{pass}}
+    {{if admin is True:}}
+        <br>Add a Tag:<br>
+        <form id = "add_tag_form">
+            <input type="text" id = "add_tag_name"><span id = "tag_confirm"></span>
+            <!--<input type="submit" value="Submit" id = "tag_submit_button">-->
+        </form>
+    {{pass}}
+</div>
+
 <br>
 
 <!--
@@ -57,12 +111,6 @@ Button to edit picture
 Places an Edit Student Org button if the user is an admin
 Places neither if the user is not logged in
 -->
-{{admin = False}}
-
-{{if auth.user:}}
-    {{if db(db.admin_pool.student_org_id == student_orgs.id and db.admin_pool.student_id == auth.user.id).select() :}}
-            {{admin = True}}
-    {{pass}}
     {{if admin == True:}}
             {{=A('Edit Picture', _class = 'btn',  _href=URL('default', 'add_student_org_picture', args=[student_orgs.id]))}}
             {{=A('Edit Student Org', _class = 'btn',  _href=URL('default', 'edit_student_org', args=[student_orgs.id]))}}

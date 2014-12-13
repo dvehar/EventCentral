@@ -21,7 +21,7 @@ def index():
 #This page lets you view the student org profiles.
 @auth.requires_login()
 def view_student_org():
-    student_orgs = db.student_org(request.args[0]) or redirect(URL('index'))
+    student_orgs = db.student_org(request.args(0, cast=int)) or redirect(URL('index'))
     return dict(student_orgs=student_orgs, user_id = auth.user_id)
 
 
@@ -100,6 +100,23 @@ def event_add_tag():
         return response.json(dict(errors=""))
     return response.json(dict(errors = "error in event_add_tag"))
 
+def student_org_add_tag():
+    ta = request.vars.msg or ''
+    if (ta != ''):
+        ta = json.loads(ta)
+        tag_name = ta['tag']
+        student_org_id = ta['student_org_id']
+        dbtag = db(db.tag.name == tag_name).select(db.tag.ALL)
+        if (len(dbtag) == 0):
+            get_tag = db.tag.insert(name=tag_name)
+            db.student_org_tags.insert(tag_id = get_tag.id, student_org_id = student_org_id)
+        else:
+            get_tag = dbtag[0]
+            dborg_tags = db((db.student_org_tags.tag_id == get_tag.id)& (db.student_org_tags.student_org_id == student_org_id)).select(db.student_org_tags.ALL)
+            if(len(dborg_tags)==0):
+                db.student_org_tags.insert(tag_id = get_tag.id, student_org_id = student_org_id)
+        return response.json(dict(errors=""))
+    return response.json(dict(errors = "error in studnet_org_add_tag"))
 
 def un_rsvp_action_callback():
   ### rsvp no: delete the rsvp entry - Desmond ###
@@ -210,9 +227,9 @@ def add_event_for_org():
         redirect(URL('index'))
     return dict(form=form)
 
+#Allows a user who is an admin of one or more student orgs to manage their orgs.
 @auth.requires_login()
 def org_admin():
-  ### Created by Desmond. Allows a user who is an admin of one or more student orgs to manage their orgs. Currently not complete and will be replaced by Brian's code ###
   org_titles_acronyms_ids=[]#[(row['admin_pool'].title, row['student_org'].acronym,row['student_org'].id)]
   rows = db( (db.admin_pool.student_id == auth.user.id) & (db.admin_pool.student_org_id == db.student_org.id)).select(db.admin_pool.title, db.student_org.acronym,db.student_org.id,orderby=db.student_org.acronym)
   for idx in range(len(rows)):
@@ -358,6 +375,14 @@ def delete_event_tag():
     if is_admin(tag.event_id):
         db(db.event_tags.id == tag.id).delete()
     redirect(URL('view_event', args=[event_id]))
+    
+@auth.requires_login()
+def delete_student_org_tag():
+    tag = db.student_org_tags(request.args(0))
+    student_org_id = tag.student_org_id
+    if is_student_org_admin(tag.student_org_id):
+        db(db.student_org_tags.id == tag.id).delete()
+    redirect(URL('view_student_org', args=[student_org_id]))
 
 #posts a comment on an event
 @auth.requires_login()
