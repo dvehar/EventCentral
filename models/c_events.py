@@ -2,13 +2,27 @@
 
 from datetime import datetime
 
+class IS_DATETIME():
+    def __init__(self, error_message='must be a datetime value'):
+        self.error_message = error_message
+    def __call__(self, value):
+        print value
+        print type(value)
+        try:
+          datetime.strptime(value, '%Y-%m-%d %I:%M:%S')
+          return (datetime.strptime(value, '%Y-%m-%d %I:%M:%S'), None)
+        except ValueError:
+          return (value, self.error_message)
+    def formatter(self, value):
+        return value
+
 db.define_table('events',
                 Field('name', 'string', requires=IS_NOT_EMPTY()),
                 Field('description', 'text', requires=IS_NOT_EMPTY()),
                 Field('student_org_id', 'reference student_org', requires=IS_NOT_EMPTY()),
                 Field('place', 'string', requires=IS_NOT_EMPTY()),
-                Field('start_time', 'datetime', requires=IS_NOT_EMPTY()),
-                Field('end_time', 'datetime', requires=IS_NOT_EMPTY()),
+                Field('start_time', 'datetime', requires=[IS_NOT_EMPTY(), IS_DATETIME()]),
+                Field('end_time', 'datetime', requires=[IS_NOT_EMPTY(), IS_DATETIME()]),
                 Field('create_time', 'datetime', default=request.now)
                 )
 
