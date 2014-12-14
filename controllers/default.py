@@ -82,41 +82,6 @@ def remove_notification_callback():
 #################################################################################   RVSP   ################################################################################################
 ###########################################################################################################################################################################################
 
-def event_add_tag():
-    ta = request.vars.msg or ''
-    if (ta != ''):
-        ta = json.loads(ta)
-        tag_name = ta['tag']
-        event_id = ta['event_id']
-        dbtag = db(db.tag.name == tag_name).select(db.tag.ALL)
-        if (len(dbtag) == 0):
-            get_tag = db.tag.insert(name=tag_name)
-            db.event_tags.insert(tag_id = get_tag.id, event_id = event_id)
-        else:
-            get_tag = dbtag[0]
-            dbevent_tags = db((db.event_tags.tag_id == get_tag.id)& (db.event_tags.event_id == event_id)).select(db.event_tags.ALL)
-            if(len(dbevent_tags)==0):
-                db.event_tags.insert(tag_id = get_tag.id, event_id = event_id)
-        return response.json(dict(errors=""))
-    return response.json(dict(errors = "error in event_add_tag"))
-
-def student_org_add_tag():
-    ta = request.vars.msg or ''
-    if (ta != ''):
-        ta = json.loads(ta)
-        tag_name = ta['tag']
-        student_org_id = ta['student_org_id']
-        dbtag = db(db.tag.name == tag_name).select(db.tag.ALL)
-        if (len(dbtag) == 0):
-            get_tag = db.tag.insert(name=tag_name)
-            db.student_org_tags.insert(tag_id = get_tag.id, student_org_id = student_org_id)
-        else:
-            get_tag = dbtag[0]
-            dborg_tags = db((db.student_org_tags.tag_id == get_tag.id)& (db.student_org_tags.student_org_id == student_org_id)).select(db.student_org_tags.ALL)
-            if(len(dborg_tags)==0):
-                db.student_org_tags.insert(tag_id = get_tag.id, student_org_id = student_org_id)
-        return response.json(dict(errors=""))
-    return response.json(dict(errors = "error in studnet_org_add_tag"))
 
 def un_rsvp_action_callback():
   ### rsvp no: delete the rsvp entry - Desmond ###
@@ -126,13 +91,14 @@ def un_rsvp_action_callback():
     rsvp_id = v['rsvp_id']
     db(db.rsvp.id == rsvp_id).delete()
     return response.json(dict(errors=""))
-        
+
   return response.json(dict(errors="there were errors"))
-    
+
+
 def rsvp_action_callback():
   ### rsvp yes or maybe. can be used to update a rsvp type as well. to cancel an rsvp use the other callback -Desmond ###
   v = request.vars.msg or ''
-  
+
   if (v != ''):
     v = json.loads(v)
     user_id = v['user_id']
@@ -148,13 +114,14 @@ def rsvp_action_callback():
       else: # len should be 1
         # update the current_rsvp
         new_rsvp_type_value = (rsvp_type == "Yes")
-        if current_rsvp.first()['rsvp_yes_or_maybe'] != new_rsvp_type_value:        
+        if current_rsvp.first()['rsvp_yes_or_maybe'] != new_rsvp_type_value:
           current_rsvp.first().update_record(rsvp_yes_or_maybe=new_rsvp_type_value)
-      
+
       return response.json(dict(errors=""))
-      
+
   return response.json(dict(errors="there were errors"))
-  
+
+
 @auth.requires_login()
 def rsvp():
   ### Created by Desmond. Query and return all the events the user is RSVP'd yes or maybe to ###
@@ -212,20 +179,6 @@ def update_rsvp_column_sort():
 #################################################################################   ADMIN   ###############################################################################################
 ###########################################################################################################################################################################################
 
-#This is the page where you add a event to a student org.
-@auth.requires_login()
-def add_event_for_org():
-    the_student_org_id = request.args(0)
-    if (not is_student_org_admin(the_student_org_id)):
-      session.flash = T('You are not an admin for this org')
-      redirect(URL('rsvp'))
-    db.events.student_org_id.default = the_student_org_id
-    form = SQLFORM(db.events, student_org_id=the_student_org_id)
-    if form.process().accepted:
-        #session.flash displays a message after redirection
-        session.flash = T('New event successfully created!')
-        redirect(URL('index'))
-    return dict(form=form)
 
 #Allows a user who is an admin of one or more student orgs to manage their orgs.
 @auth.requires_login()
@@ -247,6 +200,10 @@ def is_admin(event_id):
     else:
         return False
 
+
+#################################################################################
+################################   STUDENT ORG   ################################
+#################################################################################
 
 @auth.requires_login()
 def is_student_org_admin(student_org_id):
@@ -289,6 +246,135 @@ def delete_student_org():
         session.flash = T(student_orgs.name + ' was deleted')
         redirect(URL('index'))
     return dict(form=form, student_orgs=student_orgs)
+
+
+def student_org_add_tag():
+    ta = request.vars.msg or ''
+    if (ta != ''):
+        ta = json.loads(ta)
+        tag_name = ta['tag']
+        student_org_id = ta['student_org_id']
+        dbtag = db(db.tag.name == tag_name).select(db.tag.ALL)
+        if (len(dbtag) == 0):
+            get_tag = db.tag.insert(name=tag_name)
+            db.student_org_tags.insert(tag_id = get_tag.id, student_org_id = student_org_id)
+        else:
+            get_tag = dbtag[0]
+            dborg_tags = db((db.student_org_tags.tag_id == get_tag.id)& (db.student_org_tags.student_org_id == student_org_id)).select(db.student_org_tags.ALL)
+            if(len(dborg_tags)==0):
+                db.student_org_tags.insert(tag_id = get_tag.id, student_org_id = student_org_id)
+        return response.json(dict(errors=""))
+    return response.json(dict(errors = "error in studnet_org_add_tag"))
+
+
+@auth.requires_login()
+def delete_student_org_tag():
+    tag = db.student_org_tags(request.args(0))
+    student_org_id = tag.student_org_id
+    if is_student_org_admin(tag.student_org_id):
+        db(db.student_org_tags.id == tag.id).delete()
+    redirect(URL('view_student_org', args=[student_org_id]))
+
+
+#################################################################################
+###################################   EVENT   ###################################
+#################################################################################
+
+
+#This is the page where you add a event to a student org.
+@auth.requires_login()
+def add_event_for_org():
+    the_student_org_id = request.args(0)
+    if (not is_student_org_admin(the_student_org_id)):
+      session.flash = T('You are not an admin for this org')
+      redirect(URL('rsvp'))
+    db.events.student_org_id.default = the_student_org_id
+    form = SQLFORM(db.events, student_org_id=the_student_org_id)
+    if form.process().accepted:
+        #session.flash displays a message after redirection
+        session.flash = T('New event successfully created!')
+        redirect(URL('index'))
+    return dict(form=form)
+
+
+#allows an admin to edit the details of an event
+@auth.requires_login()
+def event_edit():
+    if is_admin(request.args(0)) is False:
+        redirect(URL('default', 'event', args=[request.args(0)]))
+    event = db.events(request.args(0))
+    if event is None:
+        session.flash = "Invalid request"
+        redirect(URL('default', 'index'))
+    form = SQLFORM(db.events, record = event)
+    if form.process().accepted:
+        redirect(URL('default','view_event', args = [request.args(0)] ))
+    return dict(form = form)
+
+
+#deletes an entire event
+@auth.requires_login()
+def delete_event():
+    if is_admin(request.args(0)):
+        db(db.events.id == request.args(0)).delete()
+    redirect(URL('default','index') )
+    return dict()
+
+
+def event_add_tag():
+    ta = request.vars.msg or ''
+    if (ta != ''):
+        ta = json.loads(ta)
+        tag_name = ta['tag']
+        event_id = ta['event_id']
+        dbtag = db(db.tag.name == tag_name).select(db.tag.ALL)
+        if (len(dbtag) == 0):
+            get_tag = db.tag.insert(name=tag_name)
+            db.event_tags.insert(tag_id = get_tag.id, event_id = event_id)
+        else:
+            get_tag = dbtag[0]
+            dbevent_tags = db((db.event_tags.tag_id == get_tag.id)& (db.event_tags.event_id == event_id)).select(db.event_tags.ALL)
+            if(len(dbevent_tags)==0):
+                db.event_tags.insert(tag_id = get_tag.id, event_id = event_id)
+        return response.json(dict(errors=""))
+    return response.json(dict(errors = "error in event_add_tag"))
+
+
+@auth.requires_login()
+def delete_event_tag():
+    tag = db.event_tags(request.args(0))
+    event_id = tag.event_id
+    if is_admin(tag.event_id):
+        db(db.event_tags.id == tag.id).delete()
+    redirect(URL('view_event', args=[event_id]))
+
+
+#################################################################################
+#################################   PICTURE   ###################################
+#################################################################################
+
+
+#posts a comment on a picture
+@auth.requires_login()
+def pic_post():
+    db.pic_comments.creation_time.default = request.now
+    db.pic_comments.poster_id.default = auth.user_id
+    db.pic_comments.picid.default = request.args(0)
+    db.pic_comments.comment_type.default = request.args(2)
+    form = SQLFORM(db.pic_comments)
+    if form.process().accepted:
+            redirect(URL('view_picture', args=(request.args(0)) ))
+    return dict(form = form)
+
+
+#allows an admin to delete a post from a picture
+@auth.requires_login()
+def delete_pic_post():
+    picture = db.pic_comments(request.args(1)).picid
+    if (picture.picture_owner_is_student_org == False) & is_admin(picture.id_of_picture_owner):
+        db(db.pic_comments.id == request.args(1)).delete()
+    redirect(URL('view_picture', args=(request.args(0)) ))
+    return dict()
 
 
 @auth.requires_login()
@@ -338,53 +424,10 @@ def delete_event_picture():
     return dict()
 
 
-#allows an admin to edit the details of an event
-@auth.requires_login()
-def event_edit():
-    if is_admin(request.args(0)) is False:
-        redirect(URL('default', 'event', args=[request.args(0)]))
-    event = db.events(request.args(0))
-    if event is None:
-        session.flash = "Invalid request"
-        redirect(URL('default', 'index'))
-    form = SQLFORM(db.events, record = event)
-    if form.process().accepted:
-        redirect(URL('default','view_event', args = [request.args(0)] ))
-    return dict(form = form)
+#################################################################################
+#################################   COMMENTS   ##################################
+#################################################################################
 
-
-#deletes an entire event
-@auth.requires_login()
-def delete_event():
-    if is_admin(request.args(0)):
-        db(db.events.id == request.args(0)).delete()
-    redirect(URL('default','index') )
-    return dict()
-
-
-#allows an admin to delete a post from an event
-@auth.requires_login()
-def delete_post():
-    if is_admin(db.comments(request.args(1)).event_id):
-        db(db.comments.id == request.args(1)).delete()
-    redirect(URL('view_event', args=(request.args(0)) ))
-    return dict()
-
-@auth.requires_login()
-def delete_event_tag():
-    tag = db.event_tags(request.args(0))
-    event_id = tag.event_id
-    if is_admin(tag.event_id):
-        db(db.event_tags.id == tag.id).delete()
-    redirect(URL('view_event', args=[event_id]))
-    
-@auth.requires_login()
-def delete_student_org_tag():
-    tag = db.student_org_tags(request.args(0))
-    student_org_id = tag.student_org_id
-    if is_student_org_admin(tag.student_org_id):
-        db(db.student_org_tags.id == tag.id).delete()
-    redirect(URL('view_student_org', args=[student_org_id]))
 
 #posts a comment on an event
 @auth.requires_login()
@@ -399,28 +442,6 @@ def event_post():
     return dict(form = form)
 
 
-#posts a comment on a picture
-@auth.requires_login()
-def pic_post():
-    db.pic_comments.creation_time.default = request.now
-    db.pic_comments.poster_id.default = auth.user_id
-    db.pic_comments.picid.default = request.args(0)
-    db.pic_comments.comment_type.default = request.args(2)
-    form = SQLFORM(db.pic_comments)
-    if form.process().accepted:
-            redirect(URL('view_picture', args=(request.args(0)) ))
-    return dict(form = form)
-
-
-#allows an admin to delete a post from a picture
-@auth.requires_login()
-def delete_pic_post():
-    picture = db.pic_comments(request.args(1)).picid
-    if (picture.picture_owner_is_student_org == False) & is_admin(picture.id_of_picture_owner):
-        db(db.pic_comments.id == request.args(1)).delete()
-    redirect(URL('view_picture', args=(request.args(0)) ))
-    return dict()
-
 @auth.requires_login()
 def reply_post():
     db.comment_replies.creation_time.default = request.now
@@ -434,6 +455,7 @@ def reply_post():
         if (request.args(2) =='1'):
             redirect(URL('view_picture', args=(request.args(3))))
     return dict(form = form)
+
 
 @auth.requires_login()
 def delete_reply():
@@ -451,6 +473,17 @@ def delete_reply():
         redirect(URL('view_picture', args = base.picid))
     session.flash = "Invalid request"
     redirect(URL('index'))
+
+
+#allows an admin to delete a post from an event
+@auth.requires_login()
+def delete_post():
+    if is_admin(db.comments(request.args(1)).event_id):
+        db(db.comments.id == request.args(1)).delete()
+    redirect(URL('view_event', args=(request.args(0)) ))
+    return dict()
+
+
 ###########################################################################################################################################################################################
 #################################################################################   SEARCH   ##############################################################################################
 ###########################################################################################################################################################################################

@@ -1,7 +1,7 @@
 {{extend 'layout.html'}}
 
-<h3>Student Org Managment</h3>
-{{=A('Add Student Org', _class = 'btn',  _href=URL('default', 'add_student_org'))}}
+<h3>Student Org Managment  {{=A('Add Student Org', _class = 'btn',  _href=URL('default', 'add_student_org'))}}</h3>
+
 <table>
   {{for title,org_acronym,org_id in org_titles_acronyms_ids:}}
     <tr>
