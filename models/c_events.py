@@ -6,15 +6,13 @@ class IS_DATETIME():
     def __init__(self, error_message='must be a datetime value'):
         self.error_message = error_message
     def __call__(self, value):
-        print value
-        print type(value)
         try:
-          datetime.strptime(value, '%Y-%m-%d %I:%M:%S')
-          return (datetime.strptime(value, '%Y-%m-%d %I:%M:%S'), None)
+          vv = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+          return (vv, None)
         except ValueError:
           return (value, self.error_message)
     def formatter(self, value):
-        return value
+        return str(value)
 
 db.define_table('events',
                 Field('name', 'string', requires=IS_NOT_EMPTY()),
