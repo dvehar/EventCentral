@@ -12,3 +12,4 @@ db.define_table('comment_replies',
 db.comment_replies.comment_id.writable   = db.comment_replies.comment_id.readable = False
 db.comment_replies.poster_id.writable    = db.comment_replies.poster_id.readable = False
 db.comment_replies.comment_type.writable = db.comment_replies.comment_type.readable = False
+db.comment_replies.creation_time.writable = False

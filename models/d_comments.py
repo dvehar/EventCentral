@@ -12,3 +12,4 @@ db.define_table('comments',
 db.comments.event_id.writable = db.comments.event_id.readable = False
 db.comments.poster_id.writable = db.comments.poster_id.readable = False
 db.comments.comment_type.writable = db.comments.comment_type.readable = False
+db.comments.creation_time.writable = False

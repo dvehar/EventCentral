@@ -158,6 +158,7 @@ Places neither if the user is not logged in
     {{for comment in comments:}}
         <div class = "comment">
         By:<i>{{=comment.poster_id.first_name}}</i><br>
+        <i><H6>{{=comment.creation_time}}</H6><i>
         {{=comment.contents}}
 
             {{if db((db.comment_replies.comment_id == comment.id)&(db.comment_replies.comment_type ==0) ).select():}}
@@ -165,17 +166,18 @@ Places neither if the user is not logged in
                 {{for reply in replies:}}
                     <div class = "comment">
                     By:<i>{{=reply.poster_id.first_name}}</i><br>
+                    <i><H6>{{=reply.creation_time}}</H6><i>
                     {{=reply.contents}}
                      {{if admin is True:}}
-                        <br>&emsp;&emsp;{{=A('Delete reply', _href = URL('default','delete_reply', args=[reply.id]))}}
+                        <br>&emsp;&emsp;{{=A('Delete reply', _class = 'btn', _href = URL('default','delete_reply', args=[reply.id]))}}
                      {{pass}}
                     </div>
                 {{pass}}
             {{pass}}
 
-        <br><br>{{=A('Reply', _href=URL('default', 'reply_post',args=[event.id,comment.id,0]))}}
+        <br><br>{{=A('Reply', _class = 'btn', _href=URL('default', 'reply_post',args=[event.id,comment.id,0]))}}
         {{if admin is True:}}
-           &emsp;&emsp;{{=A('Delete post', _href = URL('default','delete_post', args=[event.id, comment.id]))}}
+           &emsp;&emsp;{{=A('Delete post', _class = 'btn', _href = URL('default','delete_post', args=[event.id, comment.id]))}}
         {{pass}}
         </div>
         {{pass}}
