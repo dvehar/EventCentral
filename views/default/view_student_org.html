@@ -39,6 +39,17 @@ function index()
 <p class="light">Joined on {{=student_orgs.join_date}}</p>
 <hr>
 <br>
+<!-- pictures -->
+{{if db(db.picture.picture_owner_is_student_org == True and
+                 db.picture.id_of_picture_owner == student_orgs.id).select():}}
+    {{pics = db(db.picture.picture_owner_is_student_org == False and
+                 db.picture.id_of_picture_owner == student_orgs.id).select().last()}}
+<center>
+<img width="200px"
+     src="{{=URL('download', args=pics.image)}}" /> </center>
+<br>
+{{pass}}
+
 <div class="well">
 <h4>Description:</h4>
 <p>{{=student_orgs.description}}</p>
@@ -92,20 +103,6 @@ function index()
 </div>
 
 <br>
-
-<!--
-Button to edit picture
--->
-
-{{if db(db.picture.picture_owner_is_student_org == True and
-                 db.picture.id_of_picture_owner == student_orgs.id).select():}}
-    {{pics = db(db.picture.picture_owner_is_student_org == False and
-                 db.picture.id_of_picture_owner == student_orgs.id).select().last()}}
-<center>
-<img width="200px"
-     src="{{=URL('download', args=pics.image)}}" /> </center>
-<br>
-{{pass}}
 
 <!--
 Places an Edit Student Org button if the user is an admin
