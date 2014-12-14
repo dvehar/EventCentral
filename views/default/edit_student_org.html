@@ -13,8 +13,45 @@ function index()
 {
 	window.location = "{{=URL('index')}}";
 }
+      $(document).ready(function() {
+      $('#add_tag_form').submit(function(org){
+      org.preventDefault();
+      var tex = $("#add_tag_name").val();
+      var data = { tag:tex,student_org_id:{{=student_orgs.id}} };
+      var msg = "msg=" + JSON.stringify(data);
+      $.post("{{=URL('default','student_org_add_tag')}}", msg, function(jdata){
+          $("#added_tags").append(tex + "<br>");
+          $("#add_tag_name").val("");
+          $("#tag_confirm").html("tag added!").fadeOut(1000)
+      });
+  });
+});
 </script>
+
+{{org=student_orgs}}
 
 <h2>Edit student organization</h2>
 {{=form}}
 {{=BUTTON('Cancel', _onclick="index()")}}
+
+<hr>
+
+<div>
+    <h4>Tags:</h4>
+    {{if db(db.student_org_tags.student_org_id == org.id).select():}}
+        {{tags = db(db.student_org_tags.student_org_id == org.id).select()}}
+        {{for tag in tags:}}
+            {{=tag.tag_id.name}} &nbsp&nbsp
+            {{=A('Remove tag', _href=URL('default','delete_student_org_tag', args = [tag.id]))}}
+            <br>
+        {{pass}}
+        <span id = "added_tags"></span>
+    {{else:}}
+        No tags have been posted yet!
+    {{pass}}
+        <br>Add a Tag:<br>
+        <form id = "add_tag_form">
+            <input type="text" id = "add_tag_name"><span id = "tag_confirm"></span>
+            <!--<input type="submit" value="Submit" id = "tag_submit_button">-->
+        </form>
+</div>

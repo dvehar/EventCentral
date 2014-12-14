@@ -84,21 +84,11 @@ function index()
         {{tags = db(db.student_org_tags.student_org_id == org.id).select()}}
         {{for tag in tags:}}
             {{=tag.tag_id.name}} &nbsp&nbsp
-            {{if admin is True:}}
-                {{=A('Remove tag', _href=URL('default','delete_student_org_tag', args = [tag.id]))}}
-            {{pass}}
             <br>
         {{pass}}
         <span id = "added_tags"></span>
     {{else:}}
         No tags have been posted yet!
-    {{pass}}
-    {{if admin is True:}}
-        <br>Add a Tag:<br>
-        <form id = "add_tag_form">
-            <input type="text" id = "add_tag_name"><span id = "tag_confirm"></span>
-            <!--<input type="submit" value="Submit" id = "tag_submit_button">-->
-        </form>
     {{pass}}
 </div>
 
