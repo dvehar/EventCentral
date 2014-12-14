@@ -274,7 +274,7 @@ def edit_student_org():
      student_orgs = db.student_org(request.args(0,cast=int)) or redirect(URL('index'))
      form = SQLFORM(db.student_org, student_orgs).process(
          next = URL('view_student_org',args=request.args))
-     return dict(form=form)
+     return dict(student_orgs=student_orgs, user_id = auth.user_id, form=form)
 
 
 #This page allows you to delete a student org.
