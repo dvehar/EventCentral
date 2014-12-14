@@ -258,12 +258,14 @@ def is_student_org_admin(student_org_id):
 
 
 #This is the page where you add a student org.
+#Will automatically add the user to the admin group
 @auth.requires_login()
 def add_student_org():
     form = SQLFORM(db.student_org, upload=URL('download'))
     if form.process().accepted:
         #session.flash displays a message after redirection
         session.flash = T('New student organization successfully created!')
+        db.admin_pool.insert(student_org_id=db().select(db.student_org.id,orderby=db.student_org.id).last().id,student_id=auth.user.id,title='EVENTCENTRAL ORG CREATOR')
         redirect(URL('index'))
     return dict(form=form)
 
