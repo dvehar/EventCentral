@@ -219,7 +219,7 @@ def add_event_for_org():
     if (not is_student_org_admin(the_student_org_id)):
       session.flash = T('You are not an admin for this org')
       redirect(URL('rsvp'))
-      
+    db.events.student_org_id.default = the_student_org_id
     form = SQLFORM(db.events, student_org_id=the_student_org_id)
     if form.process().accepted:
         #session.flash displays a message after redirection
