@@ -274,6 +274,99 @@ def delete_student_org_tag():
     if is_student_org_admin(tag.student_org_id):
         db(db.student_org_tags.id == tag.id).delete()
     redirect(URL('view_student_org', args=[student_org_id]))
+    
+#This adds the student org leader given the user id, org id, and title.
+@auth.requires_login()
+def add_student_org_leader():
+    org_id = request.args(0)
+    
+    org_name = db(db.student_org.id == org_id).select(db.student_org.name)
+    if (len(org_name) == 0):
+      session.flash = "Org Does Not Exist"
+      redirect(URL('default', 'index'))
+    else:
+      org_name = org_name.first().name
+      
+    if not is_student_org_admin(org_id):
+      session.flash = "You Aren't A Leader Of " + org_name
+      redirect(URL('default', 'org_admin'))
+    
+    users = db(db.auth_user).select(db.auth_user.first_name, db.auth_user.last_name, db.auth_user.id)
+    add_student_org_leader_callback_url = URL('add_student_org_leader_callback');
+    admin_page_url = URL('org_admin')
+    
+    return dict(org_id=org_id, users=users, org_name=org_name, add_student_org_leader_callback_url=add_student_org_leader_callback_url, admin_page_url=admin_page_url)
+
+def add_student_org_leader_callback():    
+  v = request.vars.msg or ''
+  if (v != ''):
+    v = json.loads(v)
+    org_id = v['org_id']
+    user_id = v['user_id']
+    title = v['title']
+    
+    org_name = db(db.student_org.id == org_id).select(db.student_org.name)
+    if (len(org_name) == 0):
+      session.flash = "Org Does Not Exist"
+      redirect(URL('default', 'index'))
+    else:
+      org_name = org_name.first().name
+      
+    if not is_student_org_admin(org_id):
+      session.flash = "You Aren't A Leader Of " + org_name
+      redirect(URL('default', 'org_admin'))
+  
+    db.admin_pool.insert(student_org_id=org_id,student_id=user_id,title=title)  
+  
+    res = dict(errors="")
+  else:
+    res = dict(errors="errors exist")
+  return response.json(res)
+  
+#This function deletes the student org leader given the user id and org id.
+@auth.requires_login()
+def delete_student_org_leader():
+    org_id = request.args(0)
+    
+    org_name = db(db.student_org.id == org_id).select(db.student_org.name)
+    if (len(org_name) == 0):
+      session.flash = "Org Does Not Exist"
+      redirect(URL('default', 'index'))
+    else:
+      org_name = org_name.first().name
+      
+    if not is_student_org_admin(org_id):
+      session.flash = "You Aren't A Leader Of " + org_name
+      redirect(URL('default', 'org_admin'))
+    
+    users = db( (org_id==db.admin_pool.student_org_id) & (db.auth_user.id == db.admin_pool.student_id) ).select(db.auth_user.first_name, db.auth_user.last_name, db.admin_pool.student_id)
+    delete_student_org_leader_callback_url = URL('delete_student_org_leader_callback');
+    admin_page_url = URL('org_admin')
+    
+    return dict(org_id=org_id, users=users, org_name=org_name, delete_student_org_leader_callback_url=delete_student_org_leader_callback_url, admin_page_url=admin_page_url)
+
+@auth.requires_login()  
+def delete_student_org_leader_callback():    
+  v = request.vars.msg or ''
+  if (v != ''):
+    v = json.loads(v)
+    org_id = v['org_id']
+    user_id = v['user_id']
+    org_name = db(db.student_org.id == org_id).select(db.student_org.name)
+    if (len(org_name) == 0):
+      session.flash = "Org Does Not Exist"
+      return response.json(dict(errors="errors exist"))
+    else:
+      org_name = org_name.first().name
+    if not is_student_org_admin(org_id):
+      session.flash = "You Aren't A Leader Of " + org_name
+      return response.json(dict(errors="errors exist"))
+    db((db.admin_pool.student_id == user_id) & (db.admin_pool.student_org_id == org_id)).delete()
+  
+    res = dict(errors="")
+  else:
+    res = dict(errors="errors exist")
+  return response.json(res)
 
 
 #################################################################################

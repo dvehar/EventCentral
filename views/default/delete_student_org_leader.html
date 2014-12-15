@@ -1,0 +1,56 @@
+{{extend 'layout.html'}}
+
+<table id='the_table'>
+  <tr>
+    <th>Organization:<th>
+    <td>{{=org_name}}<td>
+  </tr>
+  <tr>
+    <th>Delete Leader:<th>
+    <td>
+      <select id="leader_select">
+        {{for x in users:}}
+          <option value="{{=x.admin_pool.student_id}}">{{=x.auth_user.first_name + " " + x.auth_user.last_name}}</option>
+        {{pass}}
+      </select>
+    <td>
+  </tr>
+</table>
+
+<button id='delete_btn'>Delete this Leader</button>
+
+
+<script>
+  $(document).ready(function() {
+    $("#delete_btn").width( $("#the_table").width() ); // make the button's width match the table's width
+    
+    $("#delete_btn").click(function(){
+      /*
+      str = "";
+      str += "org: " + {{=org_id}} + "\n";
+      str += "leader: " + $("#leader_select").val() + "\n";
+      str += "title: " + $("#title_input").val() + "\n";
+      alert(str);
+      */
+      
+        var data = { org_id:{{=org_id}}, user_id:$("#leader_select").val()};
+        var msg = "msg=" + JSON.stringify(data);
+        $.ajax({
+          type: "POST",
+          url: "{{=delete_student_org_leader_callback_url}}",
+          data: msg
+        }).done(function(jdata) {
+          var data = JSON.parse(jdata);
+          var errors = data["errors"];
+          if (errors === "") { // if no errors
+            alert("Deleted leader successfully");
+            window.location.replace("{{=admin_page_url}}");
+          } else {
+            alert("error: " + errors);
+          }
+        });
+        
+    });
+    
+  });
+</script>
